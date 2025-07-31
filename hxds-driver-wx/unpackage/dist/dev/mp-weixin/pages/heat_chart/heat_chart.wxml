@@ -1,0 +1,1 @@
+<view><map style="{{(contentStyle)}}" id="map" subkey="RPJBZ-4223W-ADURO-RMYNV-NDCB2-MLBCB" scale="12" latitude="{{latitude}}" longitude="{{longitude}}"></map></view>

@@ -1,0 +1,76 @@
+server:
+  jetty:
+    threads:
+      acceptors: 4
+      selectors: 8
+  port: 8006
+  servlet:
+    context-path: /
+
+spring:
+  profiles:
+    include: common
+  application:
+    name: hxds-rule
+  cloud:
+    inetutils:
+      preferred-networks: 127.0.0.1
+    nacos:
+      #配置中心
+      config:
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        server-addr: 127.0.0.1:8848
+        prefix: ${spring.application.name}
+        namespace: hxds
+      discovery:
+        namespace: hxds
+        username: nacos
+        password: nacos
+        server-addr: 127.0.0.1:8848
+        heart-beat-interval: 1000
+        heart-beat-timeout: 1000
+        group: DEFAULT_GROUP
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://127.0.0.1:3307/hxds?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+      username: root
+      password: abc123456
+      initial-size: 4
+      max-active: 8
+      min-idle: 8
+      max-wait: 60000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  type-aliases-package: com.example.hxds.rule.db.pojo
+  configuration:
+    map-underscore-to-camel-case: true
+
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /doc-api.html
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: on
+tx-lcn:
+  client:
+    manager-address: 127.0.0.1:8070
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 300000

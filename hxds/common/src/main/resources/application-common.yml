@@ -1,0 +1,30 @@
+spring:
+  profiles: common
+
+tencent:
+  cloud:
+    appId: 1309952305
+    secretId: your_secret_key
+    secretKey: your_secret_key
+    region-public: ap-beijing
+    bucket-public: your_secret_key
+    region-private: ap-beijing
+    bucket-private: your_secret_key
+    face:
+      groupName: hxds
+      region: ap-beijing
+  map:
+    key: your_secret_key
+
+wx:
+  app-id: your_secret_key
+  app-secret: your_secret_key
+  mch-id: your_secret_key
+  key: your_secret_key
+  cert-path: E:\apiclient_cert.p12
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: root
+  secret-key: abc123456
+

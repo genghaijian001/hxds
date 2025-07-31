@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.odr.db.dao.OrderBillDao">
+
+    <insert id="insert" parameterType="com.example.hxds.odr.db.pojo.OrderBillEntity">
+        INSERT INTO tb_order_bill
+        SET order_id = #{orderId},
+            base_mileage = #{baseMileage},
+            base_mileage_price = #{baseMileagePrice},
+            exceed_mileage_price = #{exceedMileagePrice},
+            base_minute = #{baseMinute},
+            exceed_minute_price = #{exceedMinutePrice},
+            base_return_mileage = #{baseReturnMileage},
+            exceed_return_price = #{exceedReturnPrice}
+    </insert>
+
+    <delete id="deleteUnAcceptOrderBill" parameterType="long">
+        DELETE
+        FROM tb_order_bill
+        WHERE order_id = #{orderId};
+    </delete>
+
+    <update id="updateBillFee" parameterType="Map">
+        UPDATE tb_order_bill
+        SET total         = #{total},
+            mileage_fee   = #{mileageFee},
+            waiting_fee   = #{waitingFee},
+            toll_fee      = #{tollFee},
+            parking_fee   = #{parkingFee},
+            other_fee     = #{otherFee},
+            return_fee    = #{returnFee},
+            incentive_fee = #{incentiveFee}
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="searchReviewDriverOrderBill" parameterType="Map" resultType="HashMap">
+        SELECT CAST(b.total AS CHAR)                AS total,
+               CAST(b.real_pay AS CHAR)             AS realPay,
+               CAST(b.mileage_fee AS CHAR)          AS mileageFee,
+               CAST(o.favour_fee AS CHAR)           AS favourFee,
+               CAST(o.incentive_fee AS CHAR)        AS incentiveFee,
+               CAST(b.waiting_fee AS CHAR)          AS waitingFee,
+               CAST(o.real_mileage AS CHAR)         AS realMileage,
+               CAST(b.return_fee AS CHAR)           AS returnFee,
+               CAST(b.parking_fee AS CHAR)          AS parkingFee,
+               CAST(b.toll_fee AS CHAR)             AS tollFee,
+               CAST(b.other_fee AS CHAR)           AS otherFee,
+               CAST(b.voucher_fee AS CHAR)          AS voucherFee,
+               o.waiting_minute                     AS waitingMinute,
+               b.base_mileage                       AS baseMileage,
+               CAST(b.base_mileage_price AS CHAR)   AS baseMileagePrice,
+               CAST(b.exceed_mileage_price AS CHAR) AS exceedMileagePrice,
+               b.base_minute                        AS baseMinute,
+               CAST(b.exceed_minute_price AS CHAR)  AS exceedMinutePrice,
+               b.base_return_mileage                AS baseReturnMileage,
+               CAST(b.exceed_return_price AS CHAR)  AS exceedReturnPrice,
+               CAST(o.return_mileage AS CHAR)       AS returnMileage,
+               CAST(p.tax_fee AS CHAR)              AS taxFee,
+               CAST(p.driver_income AS CHAR)        AS driverIncome
+        FROM tb_order o
+                 JOIN tb_order_bill b ON o.id = b.order_id
+                 JOIN tb_order_profitsharing p ON o.id = p.order_id
+        WHERE o.id = #{orderId}
+          AND o.driver_id = #{driverId}
+          AND o.`status` = 5
+    </select>
+
+    <update id="updateBillPayment" parameterType="Map">
+        UPDATE tb_order_bill
+        SET real_pay = #{realPay},
+        <if test="voucherFee==null">
+            voucherFee="0.00"
+        </if>
+        <if test="voucherFee!=null">
+            voucher_fee = #{voucherFee}
+        </if>
+        WHERE order_id = #{orderId}
+    </update>
+</mapper>

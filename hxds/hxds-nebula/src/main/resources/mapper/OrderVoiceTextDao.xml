@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.nebula.db.dao.OrderVoiceTextDao">
+
+    <insert id="insert" parameterType="com.example.hxds.nebula.db.pojo.OrderVoiceTextEntity">
+        UPSERT INTO hxds.order_voice_text("id", "uuid", "order_id", "record_file", "text", "create_time")
+        VALUES(NEXT VALUE FOR hxds.ovt_sequence, '${uuid}', #{orderId}, '${recordFile}', '${text}', NOW())
+    </insert>
+
+    <select id="searchIdByUuid" parameterType="String" resultType="Long">
+        SELECT "id"
+        FROM hxds.order_voice_text
+        WHERE "uuid" ='${uuid}'
+    </select>
+
+    <update id="updateCheckResult" parameterType="Map">
+        UPSERT INTO hxds.order_voice_text("id","label","suggestion","keywords")
+        VALUES (#{id},'${label}','${suggestion}',
+        <if test="keywords != null">
+            '${keywords}'
+        </if>
+        <if test="keywords == null">
+            NULL
+        </if>
+        )
+    </update>
+
+</mapper>

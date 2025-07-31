@@ -1,0 +1,3 @@
+
+
+java -jar hxds-rule.jar --spring.config.location=application-common.yml,application.yml
