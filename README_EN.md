@@ -6,9 +6,9 @@ HXDS Cloud is a full designated-driver platform repository that currently includ
 - driver WeChat mini-program: `hxds-driver-wx`
 - MIS admin frontend: `hxds-mis-vue`
 - Java microservice backend: `hxds/`
-- cloud functions, database scripts, Docker middleware stack, and deployment documents
+- cloud functions, database scripts, and Docker middleware stack
 
-This README is aligned with the **current codebase**, not with older TX-LCN-era architecture notes.
+This README is aligned with the **current codebase**.
 
 ## Current Version Overview
 
@@ -97,9 +97,7 @@ hxds-cloud-master
 |-- db/                           # Database initialization and rule SQL files
 |-- docker/                       # Local/test middleware stack and container setup
 |-- cloudfunctions/               # Cloud functions (currently OCR service)
-|-- images/                       # README screenshots
-|-- wx-miniprogram-docs/          # Mini-program capability notes
-`-- tasks/                        # Refactor, deployment, and ops documents
+`-- images/                       # README screenshots
 ```
 
 ## Current Capabilities
@@ -123,7 +121,7 @@ Mini-programs / MIS frontend
           ->
  cst / dr / odr / snm / mps / rule / nebula
           ->
-MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO
+MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO / Seata
 ```
 
 ## Service Overview
@@ -158,8 +156,6 @@ The current project depends on:
 References:
 
 - [docker/docker-compose.yml](docker/docker-compose.yml)
-- [Production deployment checklist](tasks/hxds-production-deployment-checklist.md)
-- [Windows-to-Tencent-Cloud Linux operations manual](tasks/hxds-production-operations-manual-tencent-cloud.md)
 
 ## Local Development
 
@@ -222,15 +218,6 @@ Business rule SQL files:
 The GitHub version should keep cloud, payment, SMS, and storage settings as environment-variable placeholders only, without committing real secrets.
 
 Your **locally runnable setup** should continue to use real local values through environment variables or untracked local override configuration.
-
-## Related Documents
-
-- [Single AppID refactor plan v2](tasks/single-appid-refactor-v2.md)
-- [Production deployment checklist](tasks/hxds-production-deployment-checklist.md)
-- [Windows-to-Tencent-Cloud Linux operations manual](tasks/hxds-production-operations-manual-tencent-cloud.md)
-- [Domain and go-live checklist](tasks/zdkjdj-production-deployment-checklist.md)
-- [Nginx / gateway / mini-program domain template](tasks/nginx-gateway-wechat-domain-template.md)
-- [Production docker-compose template](tasks/hxds-docker-compose-prod-template.md)
 
 ## Screenshots
 

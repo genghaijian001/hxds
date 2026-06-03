@@ -6,9 +6,9 @@ HXDS Cloud 是一个完整的代驾平台项目，当前仓库包含：
 - 司机端微信小程序：`hxds-driver-wx`
 - MIS 管理后台前端：`hxds-mis-vue`
 - Java 微服务后端：`hxds/`
-- 云函数、数据库脚本、Docker 中间件编排、部署文档
+- 云函数、数据库脚本、Docker 中间件编排
 
-当前仓库内容已经基于你现在这版代码完成升级整理，README 以下内容以**当前项目源码**为准，不再按旧版 TX-LCN 架构描述。
+当前仓库内容已经基于你现在这版代码完成升级整理，README 以下内容以**当前项目源码**为准。
 
 ## 当前版本概览
 
@@ -45,7 +45,7 @@ HXDS Cloud 是一个完整的代驾平台项目，当前仓库包含：
 
 ### 分布式事务
 
-当前项目按代码配置使用 **Seata**，不再使用 TX-LCN。
+当前项目按代码配置使用 **Seata**。
 
 从当前代码配置可见，以下服务已存在 Seata 配置：
 
@@ -97,9 +97,7 @@ hxds-cloud-master
 |-- db/                           # 当前数据库初始化脚本与规则脚本
 |-- docker/                       # 本地/测试环境中间件与容器编排
 |-- cloudfunctions/               # 云函数（当前含 OCR 服务）
-|-- images/                       # README 截图
-|-- wx-miniprogram-docs/          # 小程序能力与接口笔记
-`-- tasks/                        # 实施方案、部署清单、运维文档
+`-- images/                       # README 截图
 ```
 
 ## 当前业务能力
@@ -123,7 +121,7 @@ hxds-cloud-master
         ->
   cst / dr / odr / snm / mps / rule / nebula
         ->
-MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO
+MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO / Seata
 ```
 
 ## 服务说明
@@ -158,8 +156,6 @@ MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO
 参考：
 
 - [docker/docker-compose.yml](docker/docker-compose.yml)
-- [tasks/hxds-production-deployment-checklist.md](tasks/hxds-production-deployment-checklist.md)
-- [tasks/hxds-production-operations-manual-tencent-cloud.md](tasks/hxds-production-operations-manual-tencent-cloud.md)
 
 ## 本地开发
 
@@ -222,15 +218,6 @@ npm install
 GitHub 仓库版本应仅保留云服务、支付、短信、对象存储等配置项的环境变量占位符，不提交真实密钥。
 
 你的**本地可启动版本**应继续保留本机真实配置，或通过本机环境变量、未纳入 Git 管理的本地覆盖配置注入真实值。
-
-## 相关文档
-
-- [单 AppID 正好代驾重构实施方案 v2](tasks/single-appid-refactor-v2.md)
-- [生产部署清单](tasks/hxds-production-deployment-checklist.md)
-- [Windows 本地迁移到腾讯云 Linux 操作手册](tasks/hxds-production-operations-manual-tencent-cloud.md)
-- [域名与上线配置清单](tasks/zdkjdj-production-deployment-checklist.md)
-- [Nginx / 网关 / 小程序域名配置模板](tasks/nginx-gateway-wechat-domain-template.md)
-- [生产 docker-compose 模板](tasks/hxds-docker-compose-prod-template.md)
 
 ## 截图
 
