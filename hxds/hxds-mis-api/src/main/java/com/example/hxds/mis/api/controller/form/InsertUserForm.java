@@ -3,7 +3,7 @@ package com.example.hxds.mis.api.controller.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 @Schema(description = "添加用户表单")
 @Data

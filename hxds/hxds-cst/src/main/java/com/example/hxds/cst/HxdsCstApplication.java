@@ -1,6 +1,5 @@
 package com.example.hxds.cst;
 
-import com.codingapi.txlcn.tc.config.EnableDistributedTransaction;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.ComponentScan;
 @ServletComponentScan
 @MapperScan("com.example.hxds.cst.db.dao")
 @ComponentScan("com.example.*")
-@EnableDistributedTransaction
 public class HxdsCstApplication {
 
     public static void main(String[] args) {

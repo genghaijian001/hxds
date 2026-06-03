@@ -25,12 +25,34 @@ export default {
 			type: null,
 			photoPath: '',
 			btnText: '拍照',
-			showCamera: true,
+			showCamera: false,
 			showImage: false
 		};
 	},
 	onLoad: function(options) {
-		this.type = options.type;
+		let that = this;
+		that.type = options.type;
+		wx.getSetting({
+			success(res) {
+				if (res.authSetting['scope.camera'] === false) {
+					uni.showModal({
+						title: '需要相机权限',
+						content: '证件拍照需要访问摄像头，请在设置中允许',
+						confirmText: '去设置',
+						cancelText: '取消',
+						success(r) { if (r.confirm) wx.openSetting(); }
+					});
+				} else if (res.authSetting['scope.camera'] === undefined) {
+					wx.authorize({
+						scope: 'scope.camera',
+						success() { that.showCamera = true; },
+						fail() { uni.showToast({ icon: 'none', title: '未授权相机权限', duration: 2000 }); }
+					});
+				} else {
+					that.showCamera = true;
+				}
+			}
+		});
 	},
 	methods: {
 		clickBtn:function(){

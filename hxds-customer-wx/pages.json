@@ -15,6 +15,20 @@
 			}
 		},
 		{
+			"path": "pages/register/register",
+			"style": {
+				"navigationBarTitleText": "注册账号",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/login/sms_login",
+			"style": {
+				"navigationBarTitleText": "手机号登录 / 注册",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
 			"path": "pages/workbench/workbench",
 			"style": {
 				"navigationBarTitleText": "呼叫代驾",
@@ -32,7 +46,7 @@
 			"path": "pages/message_list/message_list",
 			"style": {
 				"navigationBarTitleText": "消息中心",
-				"enablePullDownRefresh": false
+				"enablePullDownRefresh": true
 			}
 
 		}, {
@@ -82,6 +96,48 @@
 			"path": "pages/order_list/order_list",
 			"style": {
 				"navigationBarTitleText": "订单列表",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/message/message",
+			"style": {
+				"navigationBarTitleText": "消息详情",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/settings/settings",
+			"style": {
+				"navigationBarTitleText": "设置",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/settings/edit_profile",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/about_us/about_us",
+			"style": {
+				"navigationBarTitleText": "关于我们",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/user_agreement/user_agreement",
+			"style": {
+				"navigationBarTitleText": "用户协议",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/privacy_policy/privacy_policy",
+			"style": {
+				"navigationBarTitleText": "隐私政策",
 				"enablePullDownRefresh": false
 			}
 		}
@@ -119,7 +175,7 @@
 	}],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "华夏代驾",
+		"navigationBarTitleText": "白光代驾",
 		"navigationBarBackgroundColor": "#2074FD",
 		"backgroundColor": "#FFFFFF"
 	},

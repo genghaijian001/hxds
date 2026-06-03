@@ -79,7 +79,7 @@
 						@finish="finish"
 					></u-message-input>
 				</view>
-				<view class="u-text-center u-padding-top-10 u-padding-bottom-20 tips">输入华夏代驾钱包支付密码</view>
+				<view class="u-text-center u-padding-top-10 u-padding-bottom-20 tips">输入白光代驾钱包支付密码</view>
 			</view>
 		</u-keyboard>
 		<u-top-tips ref="uTips"></u-top-tips>
@@ -109,7 +109,40 @@ export default {
 		};
 	},
 	methods: {
-		
+		updateTelHandle: function() {
+			uni.showToast({ title: '修改手机号功能暂未开放', icon: 'none' });
+		},
+		setPasswordHandle: function() {
+			this.showKeyboard = true;
+		},
+		showKeyboardHandle: function(flag) {
+			this.showKeyboard = flag;
+		},
+		keyboardChangeHandle: function(val) {
+			this.password += val;
+		},
+		backspaceHandle: function() {
+			this.password = this.password.slice(0, -1);
+		},
+		finish: function(val) {
+			this.showKeyboard = false;
+			uni.showToast({ title: '密码设置功能暂未开放', icon: 'none' });
+		},
+		updateHomeHandle: function() {
+			uni.showToast({ title: '设置回家地址功能暂未开放', icon: 'none' });
+		},
+		disableHandle: function() {
+			uni.showModal({
+				title: '警告',
+				content: '永久注销后账号信息无法恢复，确认注销？',
+				confirmColor: '#fa3534',
+				success: function(res) {
+					if (res.confirm) {
+						uni.showToast({ title: '注销功能暂未开放', icon: 'none' });
+					}
+				}
+			});
+		}
 	},
 	onLoad: function() {
 		

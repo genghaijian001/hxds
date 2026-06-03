@@ -1,7 +1,7 @@
 package com.example.hxds.odr.service.impl;
 
 import cn.hutool.core.map.MapUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.common.exception.HxdsException;
 import com.example.hxds.odr.db.dao.OrderBillDao;
 import com.example.hxds.odr.db.dao.OrderDao;
@@ -11,7 +11,7 @@ import com.example.hxds.odr.service.OrderBillService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class OrderBillServiceImpl implements OrderBillService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateBillFee(Map param) {
         //更新账单数据
         int rows = orderBillDao.updateBillFee(param);
@@ -68,10 +68,14 @@ public class OrderBillServiceImpl implements OrderBillService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateBillPayment(Map param) {
         int rows = orderBillDao.updateBillPayment(param);
-        if (rows != 1){
+        if (rows == 0) {
+            // real_pay已有值（AND real_pay IS NULL不满足），微信重复回调，幂等返回
+            return 0;
+        }
+        if (rows != 1) {
             throw new HxdsException("更新账单实际支付费用失败");
         }
         return rows;

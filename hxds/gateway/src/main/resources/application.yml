@@ -1,11 +1,5 @@
 server:
-  jetty:
-    threads:
-      acceptors: 4
-      selectors: 8
   port: 8201
-  servlet:
-    context-path: /
 
 spring:
   application:
@@ -46,6 +40,7 @@ spring:
               - "http://10.114.41.214:3000"
               - "http://192.168.1.110:3000"
               - "http://192.168.24.254:3000"
+              - "https://servicewechat.com" # 微信小程序真机调试来源
             allowedMethods: # 允许的跨域ajax的请求方式
               - "GET"
               - "POST"
@@ -74,6 +69,14 @@ spring:
           uri: lb://hxds-mis-api
           predicates:
             - Path=/hxds-mis-api/**
+          filters:
+            - StripPrefix=1
+
+        # 只开放微信支付回调入口，其余 hxds-odr 接口不对外暴露（内部服务间调用走 Feign）
+        - id: hxds-odr-notify
+          uri: lb://hxds-odr
+          predicates:
+            - Path=/hxds-odr/order/receivePayNotify
           filters:
             - StripPrefix=1
 

@@ -72,7 +72,7 @@ export default {
 			return pl;
 		},
 		calculateLine: function(ref) {
-			if (ref.latitude == 0 || ref.longitude == 0) {
+			if (ref.latitude == 0 || ref.longitude == 0 || !ref.mode) {
 				return;
 			}
 			qqmapsdk.direction({
@@ -148,6 +148,15 @@ export default {
 			}
 		});
 
+		// Seed GPS immediately so map doesn't render at 0,0
+		uni.getLocation({
+			type: 'gcj02',
+			success: function(locResp) {
+				that.latitude = locResp.latitude;
+				that.longitude = locResp.longitude;
+			}
+		});
+
 		let data = {
 			orderId: that.orderId
 		};
@@ -171,6 +180,11 @@ export default {
 				that.targetLatitude = that.endLatitude;
 				that.targetLongitude = that.endLongitude;
 				that.mode = 'driving';
+			}
+			// If getLocation hasn't responded yet, fall back to start place so map isn't at 0,0
+			if (that.latitude == 0) {
+				that.latitude = that.startLatitude;
+				that.longitude = that.startLongitude;
 			}
 			that.calculateLine(that);
 			that.timer = setInterval(function() {

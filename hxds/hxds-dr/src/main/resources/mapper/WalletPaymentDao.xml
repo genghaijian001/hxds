@@ -4,4 +4,16 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.hxds.dr.db.dao.WalletPaymentDao">
 
+    <select id="searchPaymentByMonth" parameterType="Map" resultType="HashMap">
+        SELECT CAST(id AS CHAR) AS id,
+               CAST(amount AS CHAR) AS amount,
+               remark,
+               DATE_FORMAT(create_time, '%Y-%m-%d') AS date,
+               DATE_FORMAT(create_time, '%H:%i:%s') AS time
+        FROM tb_wallet_payment
+        WHERE driver_id = #{driverId}
+          AND DATE_FORMAT(create_time, '%Y-%m') = #{month}
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>

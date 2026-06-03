@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.rule.db.dao.OrderDao">
+    <select id="searchFinishCountInRange" parameterType="Map" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_order
+        WHERE driver_id = #{driverId}
+          AND accept_time >= #{start}
+          AND accept_time &lt; #{end}
+          AND status = 8
+    </select>
+    <select id="searchFinishCountInDay" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_order o1
+                 JOIN tb_order o2 ON o1.driver_id = o2.driver_id
+        WHERE o2.id = #{orderId}
+          AND o1.date = o2.date
+          AND o1.`status` = 8
+    </select>
+    <select id="searchCancelCountInDay" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_order o1
+                 JOIN tb_order o2 ON o1.driver_id = o2.driver_id
+        WHERE o2.id = #{orderId}
+          AND o1.date = o2.date
+          AND o1.`status` = 10
+    </select>
+
+
+</mapper>

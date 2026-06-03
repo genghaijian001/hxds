@@ -1,6 +1,6 @@
 <template>
 	<view class="page">
-		<view v-if="list.length > 0" v-for="one in list" class="row" @tap="chooseOneHandle(one.id, one.carPlate, one.carType)" @longpress="removeHandle(one.id)">
+		<view v-if="list.length > 0" v-for="one in list" :key="one.id" class="row" @tap="chooseOneHandle(one.id, one.carPlate, one.carType)" @longpress="removeHandle(one.id)">
 			<view>
 				<u-icon name="info-circle-fill" color="#2979ff" size="35" class="icon"></u-icon>
 				<text class="car-type">{{ one.carType }}</text>
@@ -25,6 +25,7 @@ export default {
 			ref.list = [];
 			ref.ajax(ref.url.searchCustomerCarList, 'POST', {}, function(resp) {
 				let result = resp.data.result;
+				if (!result || !Array.isArray(result)) return;
 				for (let one of result) {
 					ref.list.push({
 						id: one.id,

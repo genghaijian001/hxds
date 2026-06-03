@@ -88,14 +88,53 @@ let dayjs = require('dayjs');
 export default {
 	data() {
 		return {
-
+			balance: '0.00',
+			incomeTotalInMonth: '0.00',
+			paymentTotalInMonth: '0.00',
+			incomeTotalInDay: '0.00',
+			monthLabel: dayjs().format('YYYY年MM月'),
+			currentMonth: dayjs().format('YYYY-MM'),
+			recordInMonth: [],
+			showList: false,
+			list: []
 		};
 	},
 	methods: {
-
+		loadWalletData: function(month) {
+			let that = this;
+			that.ajax(that.url.searchDriverWallet, 'POST', { month: month }, function(resp) {
+				let result = resp.data.result;
+				that.balance = result.balance || '0.00';
+				that.incomeTotalInMonth = result.incomeTotalInMonth || '0.00';
+				that.paymentTotalInMonth = result.paymentTotalInMonth || '0.00';
+				that.incomeTotalInDay = result.incomeTotalInDay || '0.00';
+				that.recordInMonth = result.recordInMonth || [];
+			});
+		},
+		showListHandle: function() {
+			// Build last 12 months list for picker
+			let list = [];
+			for (let i = 0; i < 12; i++) {
+				let m = dayjs().subtract(i, 'month');
+				list.push({ label: m.format('YYYY年MM月'), value: m.format('YYYY-MM') });
+			}
+			this.list = list;
+			this.showList = true;
+		},
+		confirmMonthHandle: function(e) {
+			let that = this;
+			let value = e[0].value;
+			that.currentMonth = value;
+			that.monthLabel = e[0].label;
+			that.recordInMonth = [];
+			that.loadWalletData(value);
+		}
 	},
 	onShow: function() {
-
+		let that = this;
+		that.currentMonth = dayjs().format('YYYY-MM');
+		that.monthLabel = dayjs().format('YYYY年MM月');
+		that.loadWalletData(that.currentMonth);
 	},
 	onHide: function() {
 

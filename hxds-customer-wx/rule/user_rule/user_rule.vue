@@ -4,7 +4,7 @@
 		<view class="section">规则的目的和任务</view>
 		<view class="desc">本规则基于打击恶意乘客， 维护司机人身财产安全及平台运行秩序的目的，结合平台恶意乘客现象及处理经验，进行制定。</view>
 		<view class="section">适用范围</view>
-		<view class="desc">本规则适用于通过华夏代驾APP、华夏代驾小程序等途径使用华夏代驾功能及服务的全部乘客。</view>
+		<view class="desc">本规则适用于通过白光代驾APP、白光代驾小程序等途径使用白光代驾功能及服务的全部乘客。</view>
 		<view class="section">基本原则</view>
 		<view class="desc">平等原则：对于任何乘客违规，在规则面前一律平等，任何等级、消费记录等因素均不影响规则的判定。</view>
 		<view class="desc">
@@ -13,7 +13,7 @@
 			;本规则尚无规定的，平台有权在合法合理的范围内酌情处理。同时将该案件移至公安机关处理 。
 		</view>
 		<view class="section">处罚形式</view>
-		<view class="desc">限制账号使用 ：限制违规人使用华夏代驾发单功能的权利，限制过程中该账号仍可登陆查看账号信息，但无法通过华夏代驾发单并享受代驾服务。</view>
+		<view class="desc">限制账号使用 ：限制违规人使用白光代驾发单功能的权利，限制过程中该账号仍可登陆查看账号信息，但无法通过白光代驾发单并享受代驾服务。</view>
 		<view class="desc">溯及力 ：在本规则进行变更时，规则对于行为的溯及力遵循“从旧兼从轻”原则 。</view>
 		<view class="title">分则</view>
 		<view class="section">第一章 损害平台管理秩序</view>

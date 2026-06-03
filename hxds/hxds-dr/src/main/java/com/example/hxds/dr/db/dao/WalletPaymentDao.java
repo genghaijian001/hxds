@@ -9,6 +9,8 @@ import java.util.Map;
 
 public interface WalletPaymentDao {
 
+    ArrayList<HashMap> searchPaymentByMonth(Map param);
+
 }
 
 

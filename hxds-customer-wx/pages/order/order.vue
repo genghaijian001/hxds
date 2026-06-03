@@ -156,7 +156,7 @@
 		</view>
 		<u-top-tips ref="uTips"></u-top-tips>
 		<u-popup v-model="comment.showComment" mode="center" border-radius="14" width="550rpx" height="580rpx">
-			<view class="comment-title">华夏代驾服务您满意吗</view>
+			<view class="comment-title">白光代驾服务您满意吗</view>
 			<view class="comment-desc">请给司机的服务一点评价吧~</view>
 			<view class="comment-rate">
 				<u-rate :count="comment.count" v-model="comment.value" active-color="#FFBB2A" size="40"></u-rate>
@@ -251,40 +251,34 @@ export default {
 							orderId: that.orderId,							
 						};
 						that.ajax(that.url.createWxPayment, 'POST', data, function(resp) {
-							let result = resp.data.result;					
-							
-							//模拟支付
-							if(result != null){
-								uni.showToast({
-									icon: 'success',
-									title: '付款成功'
-								});
-								setTimeout(function() {
-									that.comment.showComment = true;
-								}, 2000);
-							}else{
-								uni.showToast({
-									icon: 'error',
-									title: '付款失败'
-								});
-							}
-							
-							
-							
-							
+							let result = resp.data.result;
+							if (result == null) { uni.showToast({ icon: 'error', title: '创建支付订单失败' }); return; }
+							let timeStamp = result.timeStamp;
+							let nonceStr = result.nonceStr;
+							let pk = result.package;
+							let paySign = result.paySign;
+							let signType = result.signType || 'RSA';
 							
 							uni.requestPayment({
 								timeStamp: timeStamp,
 								nonceStr: nonceStr,
 								package: pk,
 								paySign: paySign,
-								signType: 'MD5',
+								signType: signType,
 								success: function() {
 									console.log('付款成功');
 									//主动发起查询请求
 									that.ajax(that.url.updateOrderAboutPayment, 'POST', data, function(resp) {
 										let result = resp.data.result;
 										if (result == '付款成功') {
+											// 重新拉取订单数据，更新为已付款状态，展示支付收据
+											that.ajax(that.url.searchOrderById, 'POST', data, function(orderResp) {
+												let orderResult = orderResp.data.result;
+												that.status = orderResult.status; // 应为7
+												that.realPay = orderResult.realPay;
+												that.img = '../../static/order/icon-4.png';
+												that.voucherFee = orderResult.voucherFee;
+											}, false);
 											uni.showToast({
 												icon: 'success',
 												title: '付款成功'
@@ -327,7 +321,7 @@ export default {
 				driverId: that.driverId,
 				customerId: that.customerId,
 				rate: that.comment.value,
-				remark: that.comment.remark
+				remark: that.comment.remark || '好评'
 			};
 			that.ajax(that.url.insertComment, 'POST', data, function(resp) {
 				let rows = resp.data.rows;
@@ -361,6 +355,7 @@ export default {
 			let result = resp.data.result;
 			// console.log(result);
 			that.driverId = result.driverId;
+			that.customerId = result.customerId;
 			that.name = result.name;
 			that.photo = result.photo;
 			that.title = result.title;

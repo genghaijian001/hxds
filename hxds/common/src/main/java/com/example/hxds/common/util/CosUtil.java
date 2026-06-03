@@ -135,26 +135,25 @@ public class CosUtil {
 
         //如果保存的是图片，用数据万象服务对图片内容审核
         if (List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp").contains(fileType)) {
-            //审核图片内容
             ImageAuditingRequest request = new ImageAuditingRequest();
             request.setBucketName(bucketPrivate);
-            request.setDetectType("porn,terrorist,politics,ads"); //辨别黄色、暴利、政治和广告内容
+            request.setDetectType("Porn,Terrorism,Politics,Ads"); //有效值：首字母大写
             request.setObjectKey(path);
             ImageAuditingResponse response = client.imageAuditing(request); //执行审查
 
-            if (!response.getPornInfo().getHitFlag().equals("0")
-                    || !response.getTerroristInfo().getHitFlag().equals("0")
-                    || !response.getPoliticsInfo().getHitFlag().equals("0")
-                    || !response.getAdsInfo().getHitFlag().equals("0")
-            ) {
-                //删除违规图片
+            // hitFlag: 0=正常 1=疑似(AI不确定) 2=确认违规；只拦截确认违规
+            boolean violated =
+                    (response.getPornInfo() != null && "2".equals(response.getPornInfo().getHitFlag()))
+                    || (response.getTerroristInfo() != null && "2".equals(response.getTerroristInfo().getHitFlag()))
+                    || (response.getPoliticsInfo() != null && "2".equals(response.getPoliticsInfo().getHitFlag()))
+                    || (response.getAdsInfo() != null && "2".equals(response.getAdsInfo().getHitFlag()));
+            if (violated) {
                 client.deleteObject(bucketPrivate, path);
                 throw new HxdsException("图片内容不合规");
             }
         }
         client.shutdown();
         return map;
-
     }
 
     /**

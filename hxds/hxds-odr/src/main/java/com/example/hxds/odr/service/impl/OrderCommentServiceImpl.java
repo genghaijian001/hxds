@@ -17,7 +17,7 @@ import com.qcloud.cos.region.Region;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,8 +61,9 @@ public class OrderCommentServiceImpl implements OrderCommentService {
         COSClient client = new COSClient(cred,config);//封装秘钥、地点
         TextAuditingRequest request = new TextAuditingRequest();
         request.setBucketName(bucketPublic);//存储桶
-        request.getInput().setContent(Base64.encode(entity.getRemark()));//获取评价内容
-        request.getConf().setDetectType("all");
+        String remarkContent = entity.getRemark() != null ? entity.getRemark() : "好评";
+        request.getInput().setContent(Base64.encode(remarkContent));
+        request.getConf().setDetectType("Porn,Ads,Illegal,Abuse");
 
         TextAuditingResponse response = client.createAuditingTextJobs(request);
         AuditingJobsDetail detail = response.getJobsDetail();
@@ -75,6 +76,8 @@ public class OrderCommentServiceImpl implements OrderCommentService {
             }
         }
         //保存评价内容
+        entity.setStatus((byte) 1);
+        entity.setCreateTime(new java.util.Date());
         int rows = orderCommentDao.insert(entity);
         return rows;
     }

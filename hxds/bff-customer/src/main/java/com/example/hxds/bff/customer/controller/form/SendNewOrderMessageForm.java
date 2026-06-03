@@ -3,7 +3,7 @@ package com.example.hxds.bff.customer.controller.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 @Data
 @Schema(description = "发送新订单消息的表单")

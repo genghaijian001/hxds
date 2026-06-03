@@ -1,6 +1,6 @@
 <template>
 	<view class="page">
-		<view class="item">华夏代驾取消费规则</view>
+		<view class="item">白光代驾取消费规则</view>
 		<view class="desc">
 			为保证平台公平性，顾客发单后需要取消订单的，应自行及时主动取消订单。乘客无正当理由取消订单，诱导、胁迫司机取消订单，或顾客存在下列清醒导致订单取消的，属于顾客有责消单。
 		</view>

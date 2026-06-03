@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -41,7 +41,7 @@ public class CustomerCarController {
     public R searchCustomerCarList(@RequestBody @Valid SearchCustomerCarListForm form){
         long customerId = StpUtil.getLoginIdAsLong();
         form.setCustomerId(customerId);
-        ArrayList<HashMap> list = customerCarService.searchCustomerCarList(form);
+        ArrayList<HashMap<String, Object>> list = customerCarService.searchCustomerCarList(form);
         return R.ok().put("result",list);
 
     }

@@ -30,7 +30,8 @@ export function createApp() {
 // #endif
 
 
-let baseUrl = "http://10.114.41.214:8201/hxds-driver"
+// Fix-13: 统一 API 地址，改为 127.0.0.1（与其他端保持一致）
+let baseUrl = "http://127.0.0.1:8201/hxds-driver"
 
 Vue.prototype.url = {
     registerNewDriver: `${baseUrl}/driver/registerNewDriver`,
@@ -46,6 +47,7 @@ Vue.prototype.url = {
     searchDriverAuth: `${baseUrl}/driver/searchDriverAuth`,
     startWork: `${baseUrl}/driver/startWork`,
     stopWork: `${baseUrl}/driver/stopWork`,
+    updateLocationCache: `${baseUrl}/driver/location/updateLocationCache`,
     receiveNewOrderMessage: `${baseUrl}/message/order/new/receiveNewOrderMessage`,
     acceptNewOrder: `${baseUrl}/order/acceptNewOrder`,
     searchDriverExecuteOrder: `${baseUrl}/order/searchDriverExecuteOrder`,
@@ -62,13 +64,24 @@ Vue.prototype.url = {
     searchDriverOrderByPage: `${baseUrl}/order/searchDriverOrderByPage`,
     searchOrderById: `${baseUrl}/order/searchOrderById`,
     startCommentWorkflow: `${baseUrl}/comment/startCommentWorkflow`,
+    searchMessageByPage: `${baseUrl}/message/searchMessageByPage`,
+    searchMessageById: `${baseUrl}/message/searchMessageById`,
+    deleteMessageRefById: `${baseUrl}/message/deleteMessageRefById`,
+    searchDriverWallet: `${baseUrl}/wallet/searchDriverWallet`,
+    refreshMessage: `${baseUrl}/message/refreshMessage`,
+    updateDriverSettings: `${baseUrl}/driver/updateDriverSettings`,
+    searchFineByPage: `${baseUrl}/fine/searchFineByPage`,
+    payFine: `${baseUrl}/fine/payFine`,
+    canPayFine: `${baseUrl}/fine/canPayFine`,
+    ocrIdCard: `${baseUrl}/driver/ocrIdCard`,
+    ocrDriverLicense: `${baseUrl}/driver/ocrDriverLicense`,
 }
 
 
 Vue.prototype.tencent = {
     map: {
-        referer: "华星代驾",
-        key: "4WRBZ-SVM3Z-WKAXG-7SU6N-52ESO-E6BRU"
+        referer: "正好代驾",
+        key: "ILPBZ-34ML3-KCB3G-RJNKJ-3WT32-GMFR6"
     }
 }
 
@@ -98,9 +111,17 @@ Vue.prototype.ajax = function(url, method, data, fun, load) {
                 uni.hideLoading()
             }
             if (resp.statusCode == 401) {
-                uni.redirectTo({
-                    url: "/pages/login/login.vue"
+                // Fix-14: 401时清除本地Token，防止携带失效Token循环请求
+                uni.removeStorageSync('token')
+                uni.showToast({
+                    icon: "none",
+                    title: "登录已过期，请重新登录"
                 })
+                setTimeout(function() {
+                    uni.redirectTo({
+                        url: "/pages/login/login"
+                    })
+                }, 1500)
             } else if (resp.statusCode == 200 && resp.data.code == 200) {
                 let data = resp.data
                 if (data.hasOwnProperty("token")) {
@@ -149,9 +170,10 @@ Vue.prototype.refreshMessage = function(that) {
         success: function(resp) {
 
             if (resp.statusCode == 401) {
-                uni.redirectTo({
-                    url: "/pages/login/login.vue"
-                })
+                // Fix-14: 401时清除本地Token
+                uni.removeStorageSync('token')
+                uni.showToast({ icon: "none", title: "登录已过期，请重新登录" })
+                setTimeout(function() { uni.redirectTo({ url: "/pages/login/login" }) }, 1500)
             } else if (resp.statusCode == 200 && resp.data.code == 200) {
                 uni.$emit("updateMessageService", true)
                 let result = resp.data.result
@@ -188,9 +210,10 @@ Vue.prototype.uploadCos = function(url, path, module, fun) {
         success: function(resp) {
             let data = JSON.parse(resp.data)
             if (resp.statusCode == 401) {
-                uni.redirectTo({
-                    url: "/pages/login/login.vue"
-                })
+                // Fix-14: 401时清除本地Token
+                uni.removeStorageSync('token')
+                uni.showToast({ icon: "none", title: "登录已过期，请重新登录" })
+                setTimeout(function() { uni.redirectTo({ url: "/pages/login/login" }) }, 1500)
             } else if (resp.statusCode == 200 && data.code == 200) {
                 fun(resp)
             } else {
@@ -216,9 +239,10 @@ Vue.prototype.upload = function(url, path, data, fun) {
             let data = JSON.parse(resp.data)
 
             if (resp.statusCode == 401) {
-                uni.redirectTo({
-                    url: "/pages/login/login.vue"
-                })
+                // Fix-14: 401时清除本地Token
+                uni.removeStorageSync('token')
+                uni.showToast({ icon: "none", title: "登录已过期，请重新登录" })
+                setTimeout(function() { uni.redirectTo({ url: "/pages/login/login" }) }, 1500)
             } else if (resp.statusCode == 200 && data.code == 200) {
                 fun(resp)
             } else {

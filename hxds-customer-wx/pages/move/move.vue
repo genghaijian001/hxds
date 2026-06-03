@@ -23,7 +23,7 @@
 				<view class="more" @tap="moreHandle">订单详情</view>
 			</view>
 			<view class="opt">
-				<button class="cancel-btn" :style="cancelStyle">取消订单</button>
+				<button class="cancel-btn" :style="cancelStyle" @tap="cancelOrderHandle">取消订单</button>
 				<button class="confirm-btn" v-if="status == 2 || status == 3" @tap="driverArriviedHandle">司机到达</button>
 			</view>
 		</view>
@@ -56,7 +56,8 @@ export default {
 			markers: [],
 			timer: null,
 			infoStatus: true,
-			messageTimer:null
+			messageTimer: null,
+			statusTimer: null
 		};
 	},
 	methods: {
@@ -154,11 +155,17 @@ export default {
 				ref.calculateLine(ref);
 			}
 		},
+		cancelOrderHandle: function() {
+			uni.showToast({
+				icon: 'none',
+				title: '已接单，如需取消请与司机协商'
+			});
+		},
 		driverArriviedHandle: function() {
 			let that = this;
 			uni.showModal({
 				title: '提示消息',
-				content: '确定司机已经到达代驾点？',
+				content: '确认司机已经到达代驾起点？',
 				success: function(resp) {
 					if (resp.confirm) {
 						let data = {
@@ -168,12 +175,13 @@ export default {
 							if (resp.data.result) {
 								uni.showToast({
 									icon: 'success',
-									title: '状态更新成功'
+									title: '已确认，请等待司机开始代驾'
 								});
-								that.status = 4;
-								that.mode = 'driving';
-								that.targetLatitude = that.endLatitude;
-								that.targetLongitude = that.endLongitude;
+							} else {
+								uni.showToast({
+									icon: 'none',
+									title: '司机尚未到达，请稍后再试'
+								});
 							}
 						});
 					}
@@ -192,6 +200,14 @@ export default {
 	},
 	onShow: function() {
 		let that = this;
+		// 防止重复进入onShow时定时器叠加（内存泄漏修复）
+		clearInterval(that.timer);
+		that.timer = null;
+		clearInterval(that.messageTimer);
+		that.messageTimer = null;
+		clearInterval(that.statusTimer);
+		that.statusTimer = null;
+
 		uni.$on('updateLocation', function(location) {
 			if (location != null && that.status != 2) {
 				that.latitude = location.latitude;
@@ -215,6 +231,16 @@ export default {
 
 			let status = result.status;
 
+			// 订单已进入付款/完成状态，直接跳转支付页
+			if (status >= 6) {
+				clearInterval(that.timer);
+				that.timer = null;
+				clearInterval(that.messageTimer);
+				that.messageTimer = null;
+				uni.redirectTo({ url: '../order/order?orderId=' + that.orderId });
+				return;
+			}
+
 			that.status = status;
 			if (status == 2) {
 				that.targetLatitude = that.startLatitude;
@@ -227,21 +253,66 @@ export default {
 			}
 
 			that.analyse(that);
+			// 清除后再创建，避免ajax回调多次触发时产生重复定时器
+			clearInterval(that.timer);
 			that.timer = setInterval(function() {
 				that.analyse(that);
 			}, 6000);
-			
-			if(status == 4 || status == 5){
-				that.messageTimer=setInterval(function(){
-					that.ajax(that.url.receiveBillMessage,"POST",{},function(resp){
-						if(resp.data.result=="您有代驾订单待支付"){
+
+			if (status == 4 || status == 5) {
+				clearInterval(that.messageTimer);
+				that.messageTimer = setInterval(function() {
+					that.ajax(that.url.receiveBillMessage, "POST", {}, function(resp) {
+						if (resp.data.result == "您有代驾订单待支付") {
+							// 收到支付通知后立即停止轮询，防止重复跳转
+							clearInterval(that.messageTimer);
+							that.messageTimer = null;
 							uni.redirectTo({
-								url:"../order/order?orderId="+that.orderId
-							})
+								url: "../order/order?orderId=" + that.orderId
+							});
 						}
-					},false)
-				},5000)
+					}, false);
+				}, 5000);
 			}
+
+			// 状态轮询：每5秒查询一次订单状态，感知司机端的状态变化（2→3→4）
+			clearInterval(that.statusTimer);
+			that.statusTimer = setInterval(function() {
+				that.ajax(that.url.searchOrderForMoveById, 'POST', { orderId: that.orderId }, function(resp) {
+					let newStatus = resp.data.result.status;
+					if (newStatus >= 6) {
+						clearInterval(that.timer); that.timer = null;
+						clearInterval(that.statusTimer); that.statusTimer = null;
+						clearInterval(that.messageTimer); that.messageTimer = null;
+						uni.redirectTo({ url: '../order/order?orderId=' + that.orderId });
+						return;
+					}
+					if (newStatus !== that.status) {
+						that.status = newStatus;
+						if (newStatus == 3) {
+							// 司机已到达代驾起点，切换路线目标为终点
+							that.targetLatitude = that.endLatitude;
+							that.targetLongitude = that.endLongitude;
+							that.mode = 'driving';
+						} else if (newStatus == 4 || newStatus == 5) {
+							// 司机已开始代驾，切换为终点路线 + 启动账单轮询
+							that.targetLatitude = that.endLatitude;
+							that.targetLongitude = that.endLongitude;
+							that.mode = 'driving';
+							if (!that.messageTimer) {
+								that.messageTimer = setInterval(function() {
+									that.ajax(that.url.receiveBillMessage, "POST", {}, function(resp) {
+										if (resp.data.result == "您有代驾订单待支付") {
+											clearInterval(that.messageTimer); that.messageTimer = null;
+											uni.redirectTo({ url: "../order/order?orderId=" + that.orderId });
+										}
+									}, false);
+								}, 5000);
+							}
+						}
+					}
+				}, false);
+			}, 5000);
 		});
 	},
 	onHide: function() {
@@ -249,8 +320,20 @@ export default {
 		uni.$off('updateLocation');
 		clearInterval(that.timer);
 		that.timer = null;
-		clearInterval(that.messageTimer)
-		that.messageTimer=null
+		clearInterval(that.messageTimer);
+		that.messageTimer = null;
+		clearInterval(that.statusTimer);
+		that.statusTimer = null;
+	},
+	onUnload: function() {
+		// redirectTo 触发 onUnload 而非 onHide，必须在此也清理所有定时器
+		uni.$off('updateLocation');
+		clearInterval(this.timer);
+		this.timer = null;
+		clearInterval(this.messageTimer);
+		this.messageTimer = null;
+		clearInterval(this.statusTimer);
+		this.statusTimer = null;
 	}
 };
 </script>

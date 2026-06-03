@@ -12,8 +12,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 
 @RestController
@@ -148,6 +148,16 @@ public class DriverController {
         newOrderMessageService.clearNewOrderQueue(form_2);
 
         return R.ok();
+    }
+
+    @PostMapping("/updateDriverSettings")
+    @Operation(summary = "更新司机设置")
+    @SaCheckLogin
+    public R updateDriverSettings(@RequestBody UpdateDriverSettingsForm form){
+        long driverId = StpUtil.getLoginIdAsLong();
+        form.setDriverId(driverId);
+        R r = driverService.updateDriverSettings(form);
+        return r;
     }
 
 }

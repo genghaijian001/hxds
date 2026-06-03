@@ -5,13 +5,14 @@ import com.example.hxds.mis.api.controller.form.SearchOrderGpsForm;
 import com.example.hxds.mis.api.controller.form.SearchOrderLastGpsForm;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "hxds-nebula")
 public interface NebulaServiceApi {
 
     @PostMapping("/order/gps/searchOrderGps")
-    public R searchOrderGps(SearchOrderGpsForm form);
+    public R searchOrderGps(@RequestBody SearchOrderGpsForm form);
 
     @PostMapping("/order/gps/searchOrderLastGps")
-    public R searchOrderLastGps(SearchOrderLastGpsForm form);
+    public R searchOrderLastGps(@RequestBody SearchOrderLastGpsForm form);
 }

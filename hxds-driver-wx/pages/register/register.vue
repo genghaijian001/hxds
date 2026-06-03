@@ -1,74 +1,99 @@
 <template>
     <view class="page">
-        <image src="../../static/register/top.jpg" mode="widthFix" class="top" />
-        <view class="location-container">
-            <view class="left">
-                <image src="../../static/register/location.png" mode="widthFix" class="location"></image>
-                <text>hxds服务地点</text>
-            </view>
-            <view class="right">xxx.xxx</view>
+        <view class="back-btn" @tap="goBack">‹ 返回</view>
+        <image src="../../static/register/top.jpg" mode="widthFix" class="hero-img" />
+        <view class="hero-overlay">
+            <text class="hero-title">成为代驾司机</text>
+            <text class="hero-sub">灵活接单 · 高额收益 · 自由时间</text>
         </view>
-        <view class="info-container">
-            <view class="title-container">
-                <image src="../../static/register/title-bg.png" mode="widthFix" class="title-bg"></image>
-                <text class="title">基本要求</text>
-            </view>
-            <view class="list">
-                <view class="item">
-                    <text>1.</text>
-                    三年安全驾驶经验；
+
+        <view class="card">
+            <view class="card-title-bar"><text class="card-title">为什么选择我们</text></view>
+            <view class="benefit-grid">
+                <view class="benefit-item">
+                    <text class="benefit-icon">💰</text>
+                    <text class="benefit-name">高额收益</text>
+                    <text class="benefit-desc">日均收入丰厚</text>
                 </view>
-                <view class="item">
-                    <text>2.</text>
-                    年龄23~55周岁；
-                </view>                
-                <view class="item">
-                    <text>4.</text>
-                    有熟练驾车经验；
-                </view>               
-                <view class="item">
-                    <text>6.</text>
-                    需要提供身份证、驾驶证、直系亲属联系方式，并保存前述材料的真实合法性；
+                <view class="benefit-item">
+                    <text class="benefit-icon">⏰</text>
+                    <text class="benefit-name">自由时间</text>
+                    <text class="benefit-desc">弹性灵活接单</text>
                 </view>
-            </view>
-        </view>
-        <view class="info-container">
-            <view class="title-container">
-                <image src="../../static/register/title-bg.png" mode="widthFix" class="title-bg"></image>
-                <text class="title">基本要求</text>
-            </view>
-            <view class="list">
-                <view class="complex-item">
-                    <view class="left">01</view>
-                    <view class="right">
-                        <text class="item-title">在线注册</text>
-                        <text class="item-desc">在小程序上完成注册</text>
-                    </view>
+                <view class="benefit-item">
+                    <text class="benefit-icon">🛡️</text>
+                    <text class="benefit-name">安全保障</text>
+                    <text class="benefit-desc">全程保险覆盖</text>
                 </view>
-                <view class="complex-item">
-                    <view class="left">02</view>
-                    <view class="right">
-                        <text class="item-title">基本信息提交</text>
-                        <text class="item-desc">按照流程提交本人身份证、驾驶证</text>
-                    </view>
-                </view>
-                <view class="complex-item">
-                    <view class="left">03</view>
-                    <view class="right">
-                        <text class="item-title">信息审核</text>
-                        <text class="item-desc">对提交信息以及证件进行审核</text>
-                    </view>
-                </view>
-                <view class="complex-item">
-                    <view class="left">04</view>
-                    <view class="right">
-                        <text class="item-title">签署合同</text>
-                        <text class="item-desc">收到邮寄的合同后必须本人签署</text>
-                    </view>
+                <view class="benefit-item">
+                    <text class="benefit-icon">📱</text>
+                    <text class="benefit-name">便捷操作</text>
+                    <text class="benefit-desc">手机轻松接单</text>
                 </view>
             </view>
         </view>
-        <button class="btn" open-type="getUserInfo" @tap="register()">立即注册</button>
+
+        <view class="card">
+            <view class="card-title-bar"><text class="card-title">基本要求</text></view>
+            <view class="req-item"><text class="req-dot">✓</text><text class="req-text">年龄23~55周岁</text></view>
+            <view class="req-item"><text class="req-dot">✓</text><text class="req-text">三年以上安全驾驶经验</text></view>
+            <view class="req-item"><text class="req-dot">✓</text><text class="req-text">持有有效C1及以上驾驶证</text></view>
+            <view class="req-item"><text class="req-dot">✓</text><text class="req-text">无重大违章及事故记录</text></view>
+            <view class="req-item"><text class="req-dot">✓</text><text class="req-text">提供本人身份证与驾驶证</text></view>
+        </view>
+
+        <view class="card">
+            <view class="card-title-bar"><text class="card-title">注册流程</text></view>
+            <view class="step-item">
+                <view class="step-num">01</view>
+                <view class="step-info">
+                    <text class="step-title">在线注册</text>
+                    <text class="step-desc">填写昵称完成小程序注册</text>
+                </view>
+            </view>
+            <view class="step-item">
+                <view class="step-num">02</view>
+                <view class="step-info">
+                    <text class="step-title">提交资料</text>
+                    <text class="step-desc">上传身份证与驾驶证照片</text>
+                </view>
+            </view>
+            <view class="step-item">
+                <view class="step-num">03</view>
+                <view class="step-info">
+                    <text class="step-title">审核通过</text>
+                    <text class="step-desc">1~3个工作日完成信息审核</text>
+                </view>
+            </view>
+            <view class="step-item last">
+                <view class="step-num">04</view>
+                <view class="step-info">
+                    <text class="step-title">开始接单</text>
+                    <text class="step-desc">签署合同后即可正式上岗</text>
+                </view>
+            </view>
+        </view>
+
+        <view class="card">
+            <view class="card-title-bar"><text class="card-title">完成注册</text></view>
+            <text class="auth-hint">请使用微信信息完成注册</text>
+            <button class="avatar-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+                <view class="avatar-circle">
+                    <image v-if="photo" class="avatar-img" :src="photo" mode="aspectFill"></image>
+                    <text v-else class="avatar-placeholder">📷</text>
+                </view>
+                <text class="avatar-tip">{{ photo ? '点击更换头像' : '点击选择头像' }}</text>
+            </button>
+            <input class="form-input nickname-input" type="nickname" @input="onNicknameInput" placeholder="点击填入微信昵称" :value="nickname" />
+            <button class="btn" @tap="register">立即注册成为司机</button>
+        </view>
+
+        <view class="dev-area" v-if="showDev">
+            <text class="dev-title">开发测试模式</text>
+            <input class="dev-input" v-model="devId" placeholder="输入测试ID（如：driver1）" />
+            <button class="dev-btn" size="mini" @tap="devRegister">测试注册</button>
+        </view>
+        <text class="dev-toggle" @tap="toggleDev">· · ·</text>
         <u-toast ref="uToast" />
     </view>
 </template>
@@ -77,33 +102,28 @@
 export default {
     data() {
         return {
-            code: null
+            nickname: '',
+            photo: '',
+            devId: '',
+            showDev: false
         };
     },
     methods: {
-        register: function() {
+        onChooseAvatar(e) { this.photo = e.detail.avatarUrl; },
+        onNicknameInput(e) { this.nickname = e.detail.value; },
+        goBack() { uni.navigateBack({ delta: 1 }); },
+        toggleDev() { this.showDev = !this.showDev; },
+        register() {
             let that = this;
+            if (!that.nickname) {
+                that.$refs.uToast.show({ title: '请输入您的昵称', type: 'warning' });
+                return;
+            }
             uni.login({
                 provider: 'weixin',
                 success: function(resp) {
-                    let code = resp.code;
-                    that.code = code;
-                }
-            });
-            uni.getUserProfile({
-                desc: '获取用户信息',
-                success: function(resp) {
-                    let nickname = resp.userInfo.nickName;
-                    let avatarUrl = resp.userInfo.avatarUrl;
-                    console.log(nickname);
-                    console.log(avatarUrl);
-                    let data = {
-                        code: that.code,
-                        nickname: nickname,
-                        photo: avatarUrl
-                    };
+                    let data = { code: resp.code, nickname: that.nickname, photo: that.photo };
                     that.ajax(that.url.registerNewDriver, 'POST', data, function(resp) {
-                        console.log(resp);
                         let token = resp.data.token;
                         uni.setStorageSync('token', token);
                         uni.setStorageSync('realAuth', 1);
@@ -111,13 +131,35 @@ export default {
                             title: '注册成功',
                             type: 'success',
                             callback: function() {
-                                uni.redirectTo({
-                                    url: '../../identity/filling/filling?mode=create'
-                                });
+                                uni.redirectTo({ url: '../../identity/filling/filling?mode=create' });
                             }
                         });
                     });
                 }
+            });
+        },
+        devRegister() {
+            let that = this;
+            if (!that.devId) {
+                that.$refs.uToast.show({ title: '请输入测试ID', type: 'warning' });
+                return;
+            }
+            let data = {
+                code: 'dev_driver_' + that.devId,
+                nickname: that.nickname || ('测试司机' + that.devId),
+                photo: that.photo
+            };
+            that.ajax(that.url.registerNewDriver, 'POST', data, function(resp) {
+                let token = resp.data.token;
+                uni.setStorageSync('token', token);
+                uni.setStorageSync('realAuth', 1);
+                that.$refs.uToast.show({
+                    title: '测试注册成功',
+                    type: 'success',
+                    callback: function() {
+                        uni.redirectTo({ url: '../../identity/filling/filling?mode=create' });
+                    }
+                });
             });
         }
     }
@@ -126,4 +168,15 @@ export default {
 
 <style lang="less">
 @import url('register.less');
+.back-btn {
+    position: fixed;
+    top: 88rpx;
+    left: 30rpx;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 28rpx;
+    padding: 10rpx 24rpx;
+    border-radius: 30rpx;
+}
 </style>

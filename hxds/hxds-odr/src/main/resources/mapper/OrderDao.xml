@@ -5,7 +5,7 @@
 <mapper namespace="com.example.hxds.odr.db.dao.OrderDao">
 
     <select id="searchDriverTodayBusinessData" parameterType="long" resultType="HashMap">
-        SELECT IFNULL(SUM(TIMESTAMPDIFF(HOUR,end_time,start_time) ),0) AS duration,
+        SELECT IFNULL(SUM(TIMESTAMPDIFF(HOUR,start_time,end_time) ),0) AS duration,
                IFNULL(SUM(real_fee),0) AS income,
                COUNT(id) AS orders
         FROM tb_order
@@ -99,14 +99,14 @@
                `status`
         FROM tb_order
         WHERE driver_id =#{driverId}
-          AND `status` IN (2, 3, 4) LIMIT 1
+          AND `status` IN (2, 3, 4, 5) LIMIT 1
     </select>
 
     <select id="hasCustomerUnFinishedOrder" parameterType="long" resultType="Long">
         SELECT CAST(id AS CHAR) AS id
         FROM tb_order
         WHERE customer_id = #{customerId}
-          AND `status` IN (2, 3, 4) LIMIT 1;
+          AND `status` IN (2, 3, 4, 5, 6) LIMIT 1;
     </select>
 
     <select id="hasCustomerUnAcceptOrder" parameterType="long" resultType="HashMap">
@@ -168,7 +168,7 @@
         CAST(start_place AS CHAR) AS startPlace,
         CAST(end_place AS CHAR) AS endPlace,
         CAST(real_mileage AS CHAR) AS realMileage,
-        CAST(real_fee AS CHAR) AS readFee,
+        CAST(real_fee AS CHAR) AS realFee,
         `status`,
         DATE_FORMAT(create_time,'%Y-%m-%d %H:%i') AS createdTime
         FROM tb_order
@@ -402,4 +402,24 @@
             AND `status` = #{status}
         </if>
     </select>
+
+    <!-- INC-3修复: 将超过30分钟未支付(status=6)的订单自动关闭为顾客撤单(status=9) -->
+    <update id="closeUnpaidTimeoutOrders">
+        UPDATE tb_order
+        SET `status` = 9
+        WHERE `status` = 6
+          AND end_time IS NOT NULL
+          AND TIMESTAMPDIFF(MINUTE, end_time, NOW()) > 30
+    </update>
+
+    <!-- BUG-2/DB-1/DB-4修复: 使用tb_order实际存在的pay_id字段(非transaction_id)，同步更新pay_time -->
+    <update id="updateOrderPayStatus" parameterType="map">
+        UPDATE tb_order
+        SET `status`   = #{status},
+            pay_id     = #{transactionId},
+            pay_time   = NOW()
+        WHERE uuid = #{uuid}
+          AND `status` = 6
+    </update>
+
 </mapper>

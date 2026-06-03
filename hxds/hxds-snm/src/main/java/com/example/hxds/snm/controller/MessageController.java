@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -27,6 +28,14 @@ public class MessageController {
 
     @Resource
     private MessageTask messageTask;
+
+    @PostMapping("/searchMessageByPage")
+    @Operation(summary = "分页查询用户消息")
+    public R searchMessageByPage(@Valid @RequestBody SearchMessageByPageForm form) {
+        ArrayList list = messageService.searchMessageByPage(
+                form.getUserId(), form.getIdentity(), form.getPage(), form.getLength());
+        return R.ok().put("result", list);
+    }
 
     @PostMapping("/searchMessageById")
     @Operation(summary = "根据ID查询消息")

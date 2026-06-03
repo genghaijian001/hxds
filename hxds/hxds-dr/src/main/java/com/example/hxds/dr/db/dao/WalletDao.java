@@ -11,6 +11,7 @@ public interface WalletDao {
     //司机钱包记录
     public int insert(WalletEntity entity);
 
+    HashMap searchWalletByDriverId(long driverId);
 
 }
 

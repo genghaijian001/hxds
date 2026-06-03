@@ -1,119 +1,72 @@
 <template>
-	<view>
-		<image src="../../static/login/top.png" mode="widthFix" class="top"></image>			
-		<button class="btn" @tap="login">立即进入</button>
-		<view class="register-container">
-			没有账号?
-			<text class="link" @tap="register">立即注册</text>
+	<view class="page">
+		<image src="../../static/login/top.png" mode="widthFix" class="top"></image>
+		<button class="btn" @tap="login">微信授权登录</button>
+		<view class="small-entry" @tap="toSmsLoginPage">
+			<text class="small-entry-text">手机号验证码登录 / 注册</text>
 		</view>
-		
+
+		<view class="register-container">
+			没有账号？
+			<text class="link" @tap="toRegisterPage">手动注册</text>
+		</view>
 		<u-toast ref="uToast" />
 	</view>
 </template>
 
 <script>
 export default {
-	data() {
-		return {
-			code: null
-		};
-	},
 	methods: {
-		register: function() {
-			let that = this;
-			uni.showModal({
-				title: '提示信息',
-				editable: true,
-				placeholderText: '输入手机号',
-				success: function(resp) {
-					let tel = resp.content;
-					if (resp.confirm) {
-						let bool = that.checkValidTel(tel, '手机号码');
-						if (bool) {
-							uni.login({
-								provider: 'weixin',
-								success: function(resp) {
-									let code = resp.code;
-									that.code = code;
-								}
-							});
-
-							uni.getUserProfile({
-								desc: '获取用户信息',
-								success: function(resp) {
-									let nickname = resp.userInfo.nickName;
-									let avatarUrl = resp.userInfo.avatarUrl;
-									let sex = resp.userInfo.gender;
-									let sexJson = {
-										'0': '无',
-										'1': '男',
-										'2': '女'
-									};
-									sex = sexJson[sex + ''];
-									let data = {
-										code: that.code,
-										nickname: nickname,
-										photo: avatarUrl,
-										sex: sex,
-										tel: tel
-									};
-									that.ajax(that.url.registerNewCustomer, 'POST', data, function(resp) {
-										let token = resp.data.token;
-										uni.setStorageSync('token', token);
-										that.$refs.uToast.show({
-											title: '注册成功',
-											type: 'success',
-											callback: function() {
-												uni.switchTab({
-													url: '../workbench/workbench'
-												});
-											}
-										});
-									});
-								}
-							});
-						}
-					}
-				}
-			});
-		},
-		login: function() {
+		login() {
 			let that = this;
 			uni.login({
 				provider: 'weixin',
-				success: function(resp) {
-					let code = resp.code;
-					let data = {
-						code: code
-					};
-					that.ajax(that.url.login, 'POST', data, function(resp) {
-						if (!resp.data.hasOwnProperty('token')) {
-							that.$refs.uToast.show({
-								title: '请先注册',
-								type: 'error'
-							});
-						} else {
-							let token = resp.data.token;
-							uni.setStorageSync('token', token);
-							that.$refs.uToast.show({
-								title: '登陆成功',
-								type: 'success',
-								callback: function() {
-									uni.switchTab({
-										url: '../workbench/workbench'
-									});
-								}
-							});
+				success(resp) {
+					that.ajax(that.url.login, 'POST', { code: resp.code }, function(loginResp) {
+						if (!loginResp.data.hasOwnProperty('token')) {
+							that.$refs.uToast.show({ title: '请先注册', type: 'error' });
+							return;
 						}
+						uni.setStorageSync('token', loginResp.data.token);
+						that.$refs.uToast.show({
+							title: '登录成功',
+							type: 'success',
+							callback() {
+								uni.switchTab({ url: '../workbench/workbench' });
+							}
+						});
 					});
+				},
+				fail() {
+					that.$refs.uToast.show({ title: '微信授权失败，请重试', type: 'error' });
 				}
 			});
+		},
+		toSmsLoginPage() {
+			uni.navigateTo({ url: './sms_login' });
+		},
+		toRegisterPage() {
+			uni.navigateTo({ url: '../register/register' });
 		}
-	},
-	onLoad: function() {}
+	}
 };
 </script>
 
 <style lang="less">
 @import url('login.less');
+
+.small-entry {
+	width: 46%;
+	margin: 24rpx auto 0;
+	padding: 18rpx 20rpx;
+	border-radius: 999rpx;
+	background: #eef4ff;
+	border: 2rpx solid #d8e6ff;
+	text-align: center;
+}
+
+.small-entry-text {
+	font-size: 24rpx;
+	color: #2074FD;
+}
 </style>

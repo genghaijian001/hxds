@@ -13,7 +13,7 @@ import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,9 +46,10 @@ public class DriverLocationServiceImpl implements DriverLocationService {
         Point point = new Point(Convert.toDouble(longitude), Convert.toDouble(latitude));
 
         /**
-         *把司机实时定位缓存到Redis里面，便于Geo定位计算
-         Geo是集合形式，如果设置过期时间，所有司机的定位缓存就全都失效了
-         *正确做法是司机上线后，更新GEO中的缓存定位
+         * Fix-8: 把司机实时定位缓存到Redis GEO中，便于Geo定位计算。
+         * GEO是集合形式，不能对单个元素设置过期时间。
+         * 通过 driver_online# key 的过期（65秒）来标记司机是否在线，搜索时先过滤。
+         * removeLocationCache 下线时同时删除 GEO 数据，防止幽灵司机。
          */
         redisTemplate.opsForGeo().add("driver_location", point, driverId + "");
 
@@ -68,12 +69,12 @@ public class DriverLocationServiceImpl implements DriverLocationService {
             orientation=orientateLatitude+","+orientateLongitude;
         }
         /**
-         *为了解决判断哪些司机在线，我们还要单独弄一个上线缓存
-         *缓存司机的接单设置(定向接单、接单范围、订单总里程)，便于系统判断该司机是否符合接单条
+         * 为了解决判断哪些司机在线，我们还要单独弄一个上线缓存
+         * Fix-8: 在线key过期时间设为65秒（心跳60秒+5秒容错），与GEO不同步时通过hasKey过滤
+         * 司机定期上报位置时刷新此key，超过65秒未上报则被认为离线
          */
         String temp=rangeDistance + "#" + orderDistance + "#" + orientation;
-                                        //        key                value   60秒
-        redisTemplate.opsForValue().set("driver_online#"+driverId,temp,60, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set("driver_online#"+driverId, temp, 65, TimeUnit.SECONDS);
     }
 
     /**
@@ -178,7 +179,7 @@ public class DriverLocationServiceImpl implements DriverLocationService {
                     double[] location= CoordinateTransform.transformGCJ02ToWGS84(orientationLongitude,orientationLatitude);
                     GlobalCoordinates point_1=new GlobalCoordinates(location[1],location[0]);
                     //把订单终点的火星坐标转换成GPS坐标
-                    location=CoordinateTransform.transformGCJ02ToWGS84(orientationLongitude,orientationLatitude);
+                    location=CoordinateTransform.transformGCJ02ToWGS84(endPlaceLongitude,endPlaceLatitude);
                     GlobalCoordinates point_2=new GlobalCoordinates(location[1],location[0]);
                     //这里不需要Redis的GEO计算，直接用封装函数计算两个GPS坐标之间的距离
                     GeodeticCurve geoCurve=new GeodeticCalculator().calculateGeodeticCurve(Ellipsoid.WGS84,point_1,point_2);

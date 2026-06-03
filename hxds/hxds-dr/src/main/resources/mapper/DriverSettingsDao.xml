@@ -14,4 +14,10 @@
         FROM tb_driver_settings
         WHERE driver_id=#{driverId}
     </select>
+
+    <update id="updateDriverSettings" parameterType="map">
+        UPDATE tb_driver_settings
+        SET settings=#{settings}
+        WHERE driver_id=#{driverId}
+    </update>
 </mapper>

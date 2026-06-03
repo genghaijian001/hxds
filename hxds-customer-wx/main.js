@@ -53,6 +53,7 @@ Vue.prototype.url = {
 	searchUsedVoucherByPage: `${baseUrl}/voucher/searchUsedVoucherByPage`,
 	searchUnUseVoucherCount: `${baseUrl}/voucher/searchUnUseVoucherCount`,
 	takeVoucher: `${baseUrl}/voucher/takeVoucher`,
+	searchMessageByPage: `${baseUrl}/message/searchMessageByPage`,
 }
 
 

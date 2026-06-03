@@ -29,4 +29,6 @@ public interface OrderService {
 
     public PageUtils searchDriverOrderByPage(SearchDriverOrderByPageForm form);
     public HashMap searchOrderById(SearchOrderByIdForm form);
+
+    public Integer searchOrderStatus(SearchOrderStatusForm form);
 }

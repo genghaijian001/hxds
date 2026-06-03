@@ -4,7 +4,7 @@ import cn.dev33.satoken.stp.StpInterface;
 import com.example.hxds.mis.api.db.dao.UserDao;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

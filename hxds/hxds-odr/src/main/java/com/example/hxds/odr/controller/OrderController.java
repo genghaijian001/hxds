@@ -6,8 +6,11 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
 import com.example.hxds.common.util.PageUtils;
 import com.example.hxds.common.util.R;
-import com.example.hxds.common.wxpay.MyWXPayConfig;
-import com.example.hxds.common.wxpay.WXPayUtil;
+import com.wechat.pay.java.core.RSAPublicKeyConfig;
+import com.wechat.pay.java.core.notification.NotificationParser;
+import com.wechat.pay.java.core.notification.RequestParam;
+import com.wechat.pay.java.service.payments.model.Transaction;
+import java.math.RoundingMode;
 import com.example.hxds.odr.controller.form.*;
 import com.example.hxds.odr.db.pojo.OrderBillEntity;
 import com.example.hxds.odr.db.pojo.OrderEntity;
@@ -19,10 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Reader;
@@ -41,7 +44,7 @@ public class OrderController {
     private OrderService orderService;
 
     @Resource
-    private MyWXPayConfig myWXPayConfig;
+    private RSAPublicKeyConfig rsaPublicKeyConfig;
 
     /**
      * 936373618714587137
@@ -267,6 +270,67 @@ public class OrderController {
         return R.ok().put("result", pageUtils);
     }
 
+    @PostMapping("/updateOrderPayStatus")
+    @Operation(summary = "司机端手动确认付款后更新订单状态为已付款")
+    public R updateOrderPayStatus(@RequestBody @Valid UpdateOrderPayStatusForm form) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("uuid", form.getUuid());
+        param.put("transactionId", form.getTransactionId());
+        param.put("status", 7);
+        param.put("realPay", form.getRealPay());
+        int rows = orderService.updateOrderPayStatus(param);
+        return R.ok().put("rows", rows);
+    }
 
+    @PostMapping("/receivePayNotify")
+    @Operation(summary = "接收微信支付V3回调通知")
+    public void receivePayNotify(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader reader = request.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+            }
+            String body = sb.toString();
+
+            RequestParam requestParam = new RequestParam.Builder()
+                    .serialNumber(request.getHeader("Wechatpay-Serial"))
+                    .nonce(request.getHeader("Wechatpay-Nonce"))
+                    .timestamp(request.getHeader("Wechatpay-Timestamp"))
+                    .signature(request.getHeader("Wechatpay-Signature"))
+                    .body(body)
+                    .build();
+
+            NotificationParser parser = new NotificationParser(rsaPublicKeyConfig);
+            Transaction transaction = parser.parse(requestParam, Transaction.class);
+
+            if (transaction.getTradeState() == Transaction.TradeStateEnum.SUCCESS) {
+                String outTradeNo = transaction.getOutTradeNo();
+                String transactionId = transaction.getTransactionId();
+                Integer payerTotal = transaction.getAmount().getPayerTotal();
+                String realPay = new BigDecimal(payerTotal)
+                        .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
+                        .toString();
+
+                Map<String, Object> param = new HashMap<>();
+                param.put("uuid", outTradeNo);
+                param.put("transactionId", transactionId);
+                param.put("status", 7);
+                param.put("realPay", realPay);
+                orderService.updateOrderPayStatus(param);
+            }
+
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"SUCCESS\",\"message\":\"\"}");
+        } catch (Exception e) {
+            try {
+                response.setStatus(500);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":\"FAIL\",\"message\":\"处理异常\"}");
+            } catch (Exception ignored) {}
+        }
+    }
 
 }

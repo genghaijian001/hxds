@@ -21,3 +21,35 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# IDE / local workspace
+.idea/
+.vscode/
+.claude/
+.agents/
+*.iml
+.project
+
+# Node / frontend dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+target/
+**/target/
+dist/
+**/dist/
+build/
+out/
+
+# UniApp / HBuilderX generated output
+unpackage/
+**/unpackage/
+.hbuilderx/
+**/.hbuilderx/
+
+# Logs and local runtime files
+logs/
+*.pid
+*.tmp
+.DS_Store

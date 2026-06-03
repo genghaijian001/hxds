@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,8 +76,7 @@ public class UserController {
         Integer userId = userService.login(param);
         R r = R.ok().put("result", userId != null ? true : false);
         if (userId != null) {
-            StpUtil.setLoginId(userId);
-//            StpUtil.login(userId);
+            StpUtil.login(userId);
             Set<String> permissions = userService.searchUserPermissions(userId);
             String token = StpUtil.getTokenInfo().getTokenValue();
             r.put("permissions", permissions).put("token", token);

@@ -8,7 +8,7 @@ import com.example.hxds.bff.driver.feign.MpsServiceApi;
 import com.example.hxds.bff.driver.service.DriverLocationService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 @Service
 public class DriverLocationServiceImpl implements DriverLocationService {

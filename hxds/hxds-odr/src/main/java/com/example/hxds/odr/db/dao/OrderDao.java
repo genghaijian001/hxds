@@ -74,6 +74,12 @@ public interface OrderDao {
     public ArrayList<HashMap> searchCustomerOrderByPage(Map param);
     public long searchCustomerOrderCount(Map param);
 
+    // Fix-2: 微信支付回调 - 根据uuid更新订单支付状态
+    public int updateOrderPayStatus(Map<String, Object> param);
+
+    // INC-3: 关闭超过30分钟未支付的订单(status=6 → status=9)
+    public int closeUnpaidTimeoutOrders();
+
 }
 
 

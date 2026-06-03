@@ -7,7 +7,7 @@ import com.example.hxds.mis.api.db.pojo.DeptEntity;
 import com.example.hxds.mis.api.service.DeptService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;

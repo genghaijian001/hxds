@@ -7,7 +7,7 @@ import com.example.hxds.bff.driver.service.NewOrderMessageService;
 import com.example.hxds.common.util.R;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 

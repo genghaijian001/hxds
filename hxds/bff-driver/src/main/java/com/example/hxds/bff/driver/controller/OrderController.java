@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,7 +101,9 @@ public class OrderController {
     @SaCheckLogin
     @Operation(summary = "结束代驾--更新订单状态")
     public R updateOrderStatus(@RequestBody @Valid UpdateOrderStatusForm form) {
-        int rows=orderService.updateOrderStatus(form);
+        long driverId = StpUtil.getLoginIdAsLong();
+        form.setDriverId(driverId);
+        int rows = orderService.updateOrderStatus(form);
         return R.ok().put("rows", rows);
     }
 
@@ -139,5 +141,15 @@ public class OrderController {
         form.setDriverId(driverId);
         HashMap map = orderService.searchOrderById(form);
         return R.ok().put("result",map);
+    }
+
+    @PostMapping("/searchOrderStatus")
+    @SaCheckLogin
+    @Operation(summary = "查询订单状态")
+    public R searchOrderStatus(@RequestBody @Valid SearchOrderStatusForm form) {
+        long driverId = StpUtil.getLoginIdAsLong();
+        form.setDriverId(driverId);
+        Integer status = orderService.searchOrderStatus(form);
+        return R.ok().put("result", status);
     }
 }

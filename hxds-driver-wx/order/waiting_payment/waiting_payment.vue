@@ -4,7 +4,8 @@
 			<image src="../static/waiting_payment/payment.png" mode="widthFix" class="payment"></image>
 			<view class="title">等待顾客付款</view>
 			<view class="second">{{ i }}s</view>
-			<button class="btn" @tap="checkPaymentHandle">未收到付款通知</button>
+			<button class="btn" @tap="refreshPaymentStatus">刷新支付状态</button>
+			<button class="btn btn-check" @tap="checkPaymentHandle">未收到付款通知</button>
 		</view>
 
 		<view class="notice-container">
@@ -39,6 +40,30 @@ export default {
 		};
 	},
 	methods: {
+		refreshPaymentStatus: function() {
+			let that = this;
+			let data = { orderId: that.orderId };
+			that.ajax(that.url.searchOrderStatus, 'POST', data, function(resp) {
+				if (!resp.data.hasOwnProperty('result')) {
+					uni.showToast({ icon: 'none', title: '没有找到订单' });
+				} else {
+					let result = resp.data.result;
+					if (result == 7 || result == 8) {
+						uni.showToast({ title: '客户已付款' });
+						// 恢复为"开始接单"状态，司机完成订单后可直接继续接单
+						uni.setStorageSync('workStatus', '开始接单');
+						that.ajax(that.url.startWork, 'POST', null, function(resp) {}, false);
+						clearInterval(that.timer);
+						that.i = 0;
+						setTimeout(function() {
+							uni.redirectTo({ url: '../order/order?orderId=' + that.orderId });
+						}, 2500);
+					} else {
+						uni.showToast({ icon: 'none', title: '客户尚未付款' });
+					}
+				}
+			}, false);
+		},
 		checkPaymentHandle: function() {
 			let that = this;
 			let data = {
@@ -50,17 +75,18 @@ export default {
 					uni.showToast({
 						title: '客户已付款'
 					});
-					uni.setStorageSync('workStatus', '停止接单');
+					// 恢复为"开始接单"状态，司机完成订单后可直接继续接单
+					uni.setStorageSync('workStatus', '开始接单');
+					that.ajax(that.url.startWork, 'POST', null, function(resp) {}, false);
 					clearInterval(that.timer);
 					that.i = 0;
 					setTimeout(function() {
-						uni.switchTab({
-							url: '../../pages/workbench/workbench'
-						});
+						uni.redirectTo({ url: '../order/order?orderId=' + that.orderId });
 					}, 2500);
 				} else {
 					uni.showToast({
-						icon: '未检测到成功付款'
+						icon: 'none',
+						title: '未检测到成功付款'
 					});
 				}
 			});
@@ -93,13 +119,13 @@ export default {
 								uni.showToast({
 									title: '客户已付款'
 								});
-								uni.setStorageSync('workStatus', '停止接单');
+								// 恢复为"开始接单"状态，司机完成订单后可直接继续接单
+								uni.setStorageSync('workStatus', '开始接单');
+								that.ajax(that.url.startWork, 'POST', null, function(resp) {}, false);
 								clearInterval(that.timer);
 								that.i = 0;
 								setTimeout(function() {
-									uni.switchTab({
-										url: '../../pages/workbench/workbench'
-									});
+									uni.redirectTo({ url: '../order/order?orderId=' + that.orderId });
 								}, 2500);
 							}
 						}

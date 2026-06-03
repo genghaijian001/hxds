@@ -13,4 +13,5 @@ public interface DriverService {
     public HashMap searchDriverBaseInfo(SearchDriverBaseInfoForm form);
     public HashMap searchWorkbenchData(long driverId);
     public HashMap searchDriverAuth(SearchDriverAuthForm form);
+    public R updateDriverSettings(UpdateDriverSettingsForm form);
 }

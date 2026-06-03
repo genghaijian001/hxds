@@ -77,5 +77,6 @@
             voucher_fee = #{voucherFee}
         </if>
         WHERE order_id = #{orderId}
+          AND real_pay IS NULL
     </update>
 </mapper>

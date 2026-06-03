@@ -2,7 +2,7 @@ package com.example.hxds.mis.api.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.common.util.CosUtil;
 import com.example.hxds.common.util.PageUtils;
 import com.example.hxds.common.util.R;
@@ -14,7 +14,7 @@ import com.example.hxds.mis.api.service.DriverService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
 
 @Service
@@ -72,7 +72,7 @@ public class DriverServiceImpl implements DriverService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateDriverRealAuth(UpdateDriverRealAuthForm form) {
         R r = drServiceApi.updateDriverRealAuth(form);
         int rows=MapUtil.getInt(r,"rows");

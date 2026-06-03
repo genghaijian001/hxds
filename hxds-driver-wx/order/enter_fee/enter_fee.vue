@@ -101,7 +101,9 @@ export default {
 								orderId: that.orderId
 							};
 							that.ajax(that.url.updateBillFee, 'POST', data, function(resp) {
-								uni.navigateTo({
+								// 用 redirectTo 替换当前页，避免 enter_fee 残留在页面栈
+								// 否则付款完成后返回会回到此页而非工作台
+								uni.redirectTo({
 									url: `/order/order_bill/order_bill?orderId=${that.orderId}&customerId=${that.customerId}`
 								});
 							});

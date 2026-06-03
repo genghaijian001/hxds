@@ -1,6 +1,5 @@
 package com.example.hxds.mis.api;
 
-import com.codingapi.txlcn.tc.config.EnableDistributedTransaction;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.ComponentScan;
 @ServletComponentScan
 @MapperScan("com.example.hxds.mis.api.db.dao")
 @ComponentScan("com.example.*")
-@EnableDistributedTransaction
 public class HxdsMisApiApplication {
 
     public static void main(String[] args) {

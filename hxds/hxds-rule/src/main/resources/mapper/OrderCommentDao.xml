@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.rule.db.dao.OrderCommentDao">
+    <select id="searchNegativeCountInDay" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_order_comment c
+                 JOIN tb_order o ON c.order_id = o.id
+                 JOIN (SELECT date FROM tb_order WHERE id=#{orderId}) t
+        WHERE c.rate = 1
+          AND o.date = t.date
+    </select>
+</mapper>

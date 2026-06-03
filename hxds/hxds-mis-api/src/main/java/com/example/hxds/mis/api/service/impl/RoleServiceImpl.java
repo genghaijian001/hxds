@@ -7,7 +7,7 @@ import com.example.hxds.mis.api.db.pojo.RoleEntity;
 import com.example.hxds.mis.api.service.RoleService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 

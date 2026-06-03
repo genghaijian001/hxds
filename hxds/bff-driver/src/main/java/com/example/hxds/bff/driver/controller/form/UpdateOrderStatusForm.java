@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.hibernate.validator.constraints.Range;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @Schema(description = "更新订单状态的表单")
@@ -24,4 +24,7 @@ public class UpdateOrderStatusForm {
     @Min(value = 1, message = "customerId不能小于1")
     @Schema(description = "客户ID")
     private Long customerId;
+
+    @Schema(description = "司机ID(从Token注入，不由客户端传入)")
+    private Long driverId;
 }

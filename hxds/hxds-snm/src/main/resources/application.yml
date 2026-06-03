@@ -42,20 +42,16 @@ spring:
       authentication-database: admin
       username: admin
       password: abc123456
-      option:
-        min-connection-per-host: 0
-        max-connection-per-host: 100
   servlet:
     multipart:
       enabled: true
       max-file-size: 20MB
       max-request-size: 20MB
-
-rabbitmq:
-  host: localhost
-  port: 5672
-  username: guest
-  password: guest
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 logging:
   level:

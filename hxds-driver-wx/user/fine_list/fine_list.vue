@@ -118,7 +118,7 @@
 						@finish="finish"
 					></u-message-input>
 				</view>
-				<view class="u-text-center u-padding-top-10 u-padding-bottom-20 tips">输入华夏代驾钱包支付密码</view>
+				<view class="u-text-center u-padding-top-10 u-padding-bottom-20 tips">输入白光代驾钱包支付密码</view>
 			</view>
 		</u-keyboard>
 		<u-top-tips ref="uTips"></u-top-tips>

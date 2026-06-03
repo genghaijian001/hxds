@@ -9,4 +9,10 @@
             balance=#{balance},
             password=#{password}
     </insert>
+
+    <select id="searchWalletByDriverId" parameterType="long" resultType="HashMap">
+        SELECT CAST(balance AS CHAR) AS balance
+        FROM tb_wallet
+        WHERE driver_id = #{driverId}
+    </select>
 </mapper>

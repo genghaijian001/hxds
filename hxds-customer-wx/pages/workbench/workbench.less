@@ -2,6 +2,33 @@
 page {
 	font-family: @ff-1;
 }
+.float-ball {
+	position: fixed;
+	right: 20rpx;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: 60rpx;
+	background-color: #2979ff;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	z-index: 999;
+	box-shadow: 0 4rpx 16rpx rgba(41, 121, 255, 0.5);
+	.float-ball-text {
+		color: #fff;
+		font-size: 24rpx;
+		font-weight: bold;
+		line-height: 1.4;
+	}
+	.float-ball-sub {
+		color: rgba(255,255,255,0.85);
+		font-size: 20rpx;
+		line-height: 1.4;
+	}
+}
 .map{
 	width: 100%;
 }

@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "permission": {
+    "scope.camera": {
+      "desc": "需要访问您的摄像头以进行拍摄和扫码"
+    }
+  }
+}

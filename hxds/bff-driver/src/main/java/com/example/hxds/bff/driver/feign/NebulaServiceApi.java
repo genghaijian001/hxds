@@ -8,6 +8,7 @@ import com.example.hxds.common.util.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,11 +21,11 @@ public interface NebulaServiceApi {
                               @RequestPart(value = "text", required = false) String text);
 
     @PostMapping(value = "/monitoring/insertOrderMonitoring")
-    public R insertOrderMonitoring(InsertOrderMonitoringForm form);
+    public R insertOrderMonitoring(@RequestBody InsertOrderMonitoringForm form);
 
     @PostMapping(value = "/order/gps/insertOrderGps")
-    public R insertOrderGps(InsertOrderGpsForm form);
+    public R insertOrderGps(@RequestBody InsertOrderGpsForm form);
 
     @PostMapping(value = "/order/gps/calculateOrderMileage")
-    public R calculateOrderMileage(CalculateOrderMileageForm form);
+    public R calculateOrderMileage(@RequestBody CalculateOrderMileageForm form);
 }

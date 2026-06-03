@@ -159,7 +159,7 @@
 		</view>
 		<u-top-tips ref="uTips"></u-top-tips>
 		<u-popup v-model="appeal.showAppeal" mode="center" border-radius="14" width="550rpx" height="580rpx">
-			<view class="appeal-title">华夏代驾订单评价申诉</view>
+			<view class="appeal-title">白光代驾订单评价申诉</view>
 			<u-input
 				v-model="appeal.reason"
 				type="textarea"

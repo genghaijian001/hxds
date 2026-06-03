@@ -1,13 +1,13 @@
 package com.example.hxds.cst.service.impl;
 
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.cst.db.dao.CustomerCarDao;
 import com.example.hxds.cst.db.pojo.CustomerCarEntity;
 import com.example.hxds.cst.service.CustomerCarService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -19,7 +19,7 @@ public class CustomerCarServiceImpl implements CustomerCarService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public void insertCustomerCar(CustomerCarEntity entity) {
         customerCarDao.insert(entity); //添加车辆
     }
@@ -32,7 +32,7 @@ public class CustomerCarServiceImpl implements CustomerCarService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int deleteCustomerCarById(long id) {
         int rows = customerCarDao.deleteCustomerCarById(id);  //删除车辆
         return rows;

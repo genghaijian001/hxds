@@ -6,16 +6,17 @@ import com.example.hxds.mis.api.controller.form.SearchChargeRuleByIdForm;
 import com.example.hxds.mis.api.controller.form.SearchProfitsharingRuleByIdForm;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "hxds-rule")
 public interface RuleServiceApi {
 
     @PostMapping("/charge/searchChargeRuleById")
-    public R searchChargeRuleById(SearchChargeRuleByIdForm form);
+    public R searchChargeRuleById(@RequestBody SearchChargeRuleByIdForm form);
 
     @PostMapping("/cancel/searchCancelRuleById")
-    public R searchCancelRuleById(SearchCancelRuleByIdForm form);
+    public R searchCancelRuleById(@RequestBody SearchCancelRuleByIdForm form);
 
     @PostMapping("/profitsharing/searchProfitsharingRuleById")
-    public R searchProfitsharingRuleById(SearchProfitsharingRuleByIdForm form);
+    public R searchProfitsharingRuleById(@RequestBody SearchProfitsharingRuleByIdForm form);
 }

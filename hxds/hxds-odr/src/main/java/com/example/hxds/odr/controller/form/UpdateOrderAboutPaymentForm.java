@@ -3,8 +3,8 @@ package com.example.hxds.odr.controller.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @Schema(description = "更新代驾订单支付信息的表单")

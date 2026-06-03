@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.cst.db.dao.VoucherDao">
+
+    <select id="searchUnUseVoucherCount" parameterType="long" resultType="long">
+        SELECT COUNT(vc.id)
+        FROM hxds_vhr.tb_voucher_customer vc
+        WHERE vc.customer_id = #{customerId} AND vc.status = 0
+    </select>
+
+    <select id="searchUnUseVoucherByPage" parameterType="Map" resultType="HashMap">
+        SELECT v.discount, v.with_amount AS withAmount, v.remark,
+               v.time_type AS timeType, v.days,
+               DATE_FORMAT(vc.start_time,'%Y-%m-%d') AS startTime,
+               DATE_FORMAT(vc.end_time,'%Y-%m-%d') AS endTime,
+               DATE_FORMAT(vc.create_time,'%Y-%m-%d') AS createTime
+        FROM hxds_vhr.tb_voucher_customer vc
+        JOIN hxds_vhr.tb_voucher v ON vc.voucher_id = v.id
+        WHERE vc.customer_id = #{customerId} AND vc.status = 0
+        ORDER BY vc.id DESC
+        LIMIT #{start}, #{length}
+    </select>
+
+    <select id="searchUnUseVoucherByPageCount" parameterType="Map" resultType="long">
+        SELECT COUNT(vc.id)
+        FROM hxds_vhr.tb_voucher_customer vc
+        WHERE vc.customer_id = #{customerId} AND vc.status = 0
+    </select>
+
+    <select id="searchUsedVoucherByPage" parameterType="Map" resultType="HashMap">
+        SELECT v.discount, v.with_amount AS withAmount, v.remark,
+               v.time_type AS timeType, v.days,
+               DATE_FORMAT(vc.start_time,'%Y-%m-%d') AS startTime,
+               DATE_FORMAT(vc.end_time,'%Y-%m-%d') AS endTime,
+               DATE_FORMAT(vc.create_time,'%Y-%m-%d') AS createTime
+        FROM hxds_vhr.tb_voucher_customer vc
+        JOIN hxds_vhr.tb_voucher v ON vc.voucher_id = v.id
+        WHERE vc.customer_id = #{customerId} AND vc.status = 1
+        ORDER BY vc.id DESC
+        LIMIT #{start}, #{length}
+    </select>
+
+    <select id="searchUsedVoucherByPageCount" parameterType="Map" resultType="long">
+        SELECT COUNT(vc.id)
+        FROM hxds_vhr.tb_voucher_customer vc
+        WHERE vc.customer_id = #{customerId} AND vc.status = 1
+    </select>
+
+    <select id="searchUnTakeVoucherByPage" parameterType="Map" resultType="HashMap">
+        SELECT v.id, v.uuid, v.discount, v.with_amount AS withAmount, v.remark,
+               v.time_type AS timeType, v.days,
+               DATE_FORMAT(v.start_time,'%Y-%m-%d') AS startTime,
+               DATE_FORMAT(v.end_time,'%Y-%m-%d') AS endTime,
+               DATE_FORMAT(v.create_time,'%Y-%m-%d') AS createTime
+        FROM hxds_vhr.tb_voucher v
+        WHERE v.status = 1
+          AND v.take_count &lt; v.total_quota
+          AND v.id NOT IN (
+              SELECT voucher_id FROM hxds_vhr.tb_voucher_customer WHERE customer_id = #{customerId}
+          )
+          AND (v.end_time IS NULL OR v.end_time > NOW())
+        ORDER BY v.id DESC
+        LIMIT #{start}, #{length}
+    </select>
+
+    <select id="searchUnTakeVoucherByPageCount" parameterType="Map" resultType="long">
+        SELECT COUNT(v.id)
+        FROM hxds_vhr.tb_voucher v
+        WHERE v.status = 1
+          AND v.take_count &lt; v.total_quota
+          AND v.id NOT IN (
+              SELECT voucher_id FROM hxds_vhr.tb_voucher_customer WHERE customer_id = #{customerId}
+          )
+          AND (v.end_time IS NULL OR v.end_time > NOW())
+    </select>
+
+    <insert id="takeVoucher" parameterType="Map">
+        INSERT INTO hxds_vhr.tb_voucher_customer (customer_id, voucher_id, status, start_time, end_time)
+        SELECT #{customerId}, v.id, 0,
+               CASE WHEN v.time_type = 2 THEN v.start_time ELSE NOW() END,
+               CASE WHEN v.time_type = 1 THEN DATE_ADD(NOW(), INTERVAL v.days DAY)
+                    WHEN v.time_type = 2 THEN v.end_time
+                    ELSE NULL END
+        FROM hxds_vhr.tb_voucher v
+        WHERE v.id = #{id} AND v.uuid = #{uuid} AND v.status = 1
+          AND v.take_count &lt; v.total_quota
+          AND v.id NOT IN (
+              SELECT voucher_id FROM hxds_vhr.tb_voucher_customer WHERE customer_id = #{customerId}
+          )
+    </insert>
+
+</mapper>

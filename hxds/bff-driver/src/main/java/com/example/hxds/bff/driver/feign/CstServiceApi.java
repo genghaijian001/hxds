@@ -4,11 +4,12 @@ import com.example.hxds.bff.driver.controller.form.SearchCustomerInfoInOrderForm
 import com.example.hxds.common.util.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "hxds-cst")
 public interface CstServiceApi {
 
     @PostMapping("/customer/searchCustomerInfoInOrder")
-    public R searchCustomerInfoInOrder(SearchCustomerInfoInOrderForm form);
+    public R searchCustomerInfoInOrder(@RequestBody SearchCustomerInfoInOrderForm form);
 
 }

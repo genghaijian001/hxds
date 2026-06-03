@@ -64,8 +64,19 @@ public class MapServiceImpl implements MapService {
         JSONArray rows = json.getJSONObject("result").getJSONArray("rows");
         JSONObject element = rows.get(0, JSONObject.class).getJSONArray("elements").get(0, JSONObject.class);
         int distance = element.getInt("distance");
-        //distance除以1000，得到英里数。将英里数转换为字符串。
-        String mileage=new BigDecimal(distance).divide(new BigDecimal(1000)).toString();
+        // distance(米)转公里，向上取整保留1位小数，最小0.1公里
+        // 防止distance=0时产生"0"字符串，导致hxds-rule正则校验失败（mileage内容不正确）
+        BigDecimal distanceBD = new BigDecimal(distance);
+        BigDecimal mileageBD;
+        if (distanceBD.compareTo(BigDecimal.ZERO) <= 0) {
+            mileageBD = new BigDecimal("0.1");
+        } else {
+            mileageBD = distanceBD.divide(new BigDecimal(1000), 1, RoundingMode.CEILING);
+            if (mileageBD.compareTo(BigDecimal.ZERO) <= 0) {
+                mileageBD = new BigDecimal("0.1");
+            }
+        }
+        String mileage = mileageBD.toPlainString();
         //从JSON对象中获取duration属性，并将其转换为整数。
         int duration=element.getInt("duration");
         //将duration除以60，得到分钟数。

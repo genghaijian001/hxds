@@ -101,7 +101,7 @@ class Request {
 
 	constructor() {
 		this.config = {
-			baseUrl: '', // 请求的根域名
+			baseUrl: 'http://192.168.56.1:8080', // 请求的根域名
 			// 默认的请求头
 			header: {},
 			method: 'POST',

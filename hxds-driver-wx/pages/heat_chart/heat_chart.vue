@@ -1,7 +1,7 @@
 <template>
 	<view>
 		<map id="map" :style="contentStyle" 
-		    subkey="RPJBZ-4223W-ADURO-RMYNV-NDCB2-MLBCB" scale="12" 
+		    subkey="ILPBZ-34ML3-KCB3G-RJNKJ-3WT32-GMFR6" scale="12" 
 		    :latitude="latitude" :longitude="longitude">
 		</map>
 	</view>
@@ -38,20 +38,19 @@
 			let windowHeight=uni.getSystemInfoSync().windowHeight
 			that.windowHeight=windowHeight
 			that.contentStyle = `width: 750rpx;height:${that.windowHeight}px;`;
-			
 			let map = wx.createMapContext('map');
 			map.addVisualLayer({
 				layerId: '88fdf7fdfb12',
 				interval: 5,
 				zIndex: 999,
 				success: function(resp) {
-				    console.log(resp);
+				    console.log('热力图层加载成功', resp);
 				},
 				fail: function(error) {
-				    console.log(error);
+				    console.log('热力图层加载失败', error);
 				}
-			})
-		}
+			});
+			}
 	}
 </script>
 

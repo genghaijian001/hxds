@@ -4,14 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public interface CustomerService {
-    //注册新用户
-    public String registerNewCustomer(Map param);
-    public String login(String code);
+    String registerNewCustomer(Map param);
 
-    //加载执行订单，查询乘客信息
-    public HashMap searchCustomerInfoInOrder(long customerId);
-    //mis查询乘客信息  折叠面板
-    public HashMap searchCustomerBriefInfo(long customerId);
+    String login(Map param);
 
-    public String searchCustomerOpenId(long customerId);
+    HashMap searchCustomerInfoInOrder(long customerId);
+
+    HashMap searchCustomerBriefInfo(long customerId);
+
+    String searchCustomerOpenId(long customerId);
+
+    HashMap searchCustomerProfile(long customerId);
+
+    int updateCustomerProfile(Map param);
+
+    int updateCustomerPhoto(Map param);
+
+    int updateCustomerTel(Map param);
 }

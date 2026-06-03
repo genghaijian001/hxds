@@ -17,7 +17,6 @@ spring:
     database: 7
     host: localhost
     port: 6379
-    password: abc123456
     jedis:
       pool:
         max-active: 1000

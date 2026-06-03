@@ -1,30 +1,34 @@
-spring:
-  profiles: common
-
 tencent:
   cloud:
-    appId: 1309952305
-    secretId: your_secret_key
-    secretKey: your_secret_key
+    appId: ${TENCENT_APP_ID:CHANGE_ME_TENCENT_APP_ID}
+    secretId: ${TENCENT_SECRET_ID:CHANGE_ME_TENCENT_SECRET_ID}
+    secretKey: ${TENCENT_SECRET_KEY:CHANGE_ME_TENCENT_SECRET_KEY}
     region-public: ap-beijing
-    bucket-public: your_secret_key
+    bucket-public: 123412341234-public-1364918336
     region-private: ap-beijing
-    bucket-private: your_secret_key
+    bucket-private: 87654321-private-1364918336
     face:
       groupName: hxds
       region: ap-beijing
   map:
-    key: your_secret_key
+    key: ${TENCENT_MAP_KEY:CHANGE_ME_TENCENT_MAP_KEY}
 
 wx:
-  app-id: your_secret_key
-  app-secret: your_secret_key
-  mch-id: your_secret_key
-  key: your_secret_key
-  cert-path: E:\apiclient_cert.p12
+  app-id: ${WX_APP_ID:CHANGE_ME_WX_APP_ID}
+  app-secret: ${WX_APP_SECRET:CHANGE_ME_WX_APP_SECRET}
+  mch-id: ${WX_MCH_ID:CHANGE_ME_WX_MCH_ID}
+  key: ${WX_PAY_KEY:CHANGE_ME_WX_PAY_KEY}
+  cert-path: ${WX_CERT_PATH:CHANGE_ME_WX_CERT_PATH}
+  notify-url: ${WECHAT_PAY_NOTIFY_URL:https://example.com/hxds-odr/order/receivePayNotify}
+  v3:
+    mch-id: ${WX_MCH_ID:CHANGE_ME_WX_MCH_ID}
+    serial-no: ${WECHAT_PAY_MERCHANT_SERIAL_NUMBER:CHANGE_ME_WECHAT_PAY_MERCHANT_SERIAL_NUMBER}
+    private-key-path: ${WECHAT_PAY_KEY_PATH:CHANGE_ME_WECHAT_PAY_KEY_PATH}
+    api-v3-key: ${WX_PAY_KEY:CHANGE_ME_WX_PAY_KEY}
+    pub-key-id: ${WECHAT_PAY_PUB_KEY_ID:CHANGE_ME_WECHAT_PAY_PUB_KEY_ID}
+    pub-key-path: ${WECHAT_PAY_PUB_KEY_PATH:CHANGE_ME_WECHAT_PAY_PUB_KEY_PATH}
 
 minio:
-  endpoint: http://localhost:9000
-  access-key: root
-  secret-key: abc123456
-
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:CHANGE_ME_MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY:CHANGE_ME_MINIO_SECRET_KEY}

@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,6 +102,14 @@ public class OrderController {
         form.setCustomerId(customerId);
         HashMap map = orderService.createWxPayment(form.getOrderId(),form.getCustomerId());
         return R.ok().put("result", map);
+    }
+
+    @PostMapping("/updateOrderAboutPayment")
+    @SaCheckLogin
+    @Operation(summary = "支付完成后更新订单状态")
+    public R updateOrderAboutPayment(@RequestBody @Valid UpdateOrderAboutPaymentForm form) {
+        String result = orderService.updateOrderAboutPayment(form);
+        return R.ok().put("result", result);
     }
 
     @PostMapping("/searchCustomerOrderByPage")

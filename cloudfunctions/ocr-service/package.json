@@ -1,0 +1,9 @@
+{
+  "name": "ocr-service",
+  "version": "1.0.0",
+  "description": "腾讯云OCR识别云函数 - 封装身份证/驾照/通用OCR",
+  "main": "index.js",
+  "dependencies": {
+    "tencentcloud-sdk-nodejs": "^4.0.800"
+  }
+}

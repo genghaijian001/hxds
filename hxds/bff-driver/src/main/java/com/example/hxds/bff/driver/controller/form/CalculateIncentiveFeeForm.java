@@ -3,8 +3,8 @@ package com.example.hxds.bff.driver.controller.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Data
 @Schema(description = "计算系统奖励的表单")

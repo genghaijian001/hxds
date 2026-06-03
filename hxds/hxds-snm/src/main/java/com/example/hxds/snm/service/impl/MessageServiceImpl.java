@@ -7,7 +7,8 @@ import com.example.hxds.snm.db.pojo.MessageEntity;
 import com.example.hxds.snm.db.pojo.MessageRefEntity;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -65,6 +66,22 @@ public class MessageServiceImpl implements MessageService {
     public long deleteUserMessageRef(long userId, String identity) {
         long rows = messageRefDao.deleteUserMessageRef(userId, identity);
         return rows;
+    }
+
+    @Override
+    public ArrayList<HashMap> searchMessageByPage(long userId, String identity, long page, long length) {
+        ArrayList<HashMap> refs = messageRefDao.searchByPage(userId, identity, page, length);
+        for (HashMap ref : refs) {
+            String messageId = (String) ref.get("messageId");
+            HashMap msg = messageDao.searchMessageById(messageId);
+            if (msg != null) {
+                ref.put("senderName", msg.get("senderName"));
+                ref.put("senderPhoto", msg.get("senderPhoto"));
+                ref.put("msg", msg.get("msg"));
+                ref.put("sendTime", msg.get("sendTime"));
+            }
+        }
+        return refs;
     }
 }
 

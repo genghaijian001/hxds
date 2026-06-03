@@ -1,4 +1,4 @@
-server:
+﻿server:
   jetty:
     threads:
       acceptors: 4
@@ -17,7 +17,7 @@ spring:
     database: 4
     host: localhost
     port: 6379
-    password: abc123456
+    password: 
     jedis:
       pool:
         max-active: 1000
@@ -76,13 +76,28 @@ springdoc:
     path: /swagger-ui.html
     disable-swagger-default-url: on
 
-tx-lcn:
-  client:
-    #连接TM节点
-    manager-address: 127.0.0.1:8070
+wx:
+  notify-url: ${WECHAT_PAY_NOTIFY_URL:https://example.com/hxds-odr/order/receivePayNotify}
+
+seata:
+  enabled: true
+  application-id: ${spring.application.name}
+  tx-service-group: hxds_tx_group
+  service:
+    vgroup-mapping:
+      hxds_tx_group: default
+    grouplist:
+      default: 127.0.0.1:8091
+
 feign:
   client:
     config:
       default:
         connectTimeout: 10000
         readTimeout: 300000
+
+sms:
+  accessKeyId: ${SMS_ACCESS_KEY_ID:CHANGE_ME_SMS_ACCESS_KEY_ID}
+  accessKeySecret: ${SMS_ACCESS_KEY_SECRET:CHANGE_ME_SMS_ACCESS_KEY_SECRET}
+  signName: ${SMS_SIGN_NAME:CHANGE_ME_SMS_SIGN_NAME}
+  templateCode: ${SMS_TEMPLATE_CODE:CHANGE_ME_SMS_TEMPLATE_CODE}

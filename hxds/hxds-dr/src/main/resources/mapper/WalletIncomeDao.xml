@@ -4,4 +4,82 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.hxds.dr.db.dao.WalletIncomeDao">
 
+    <!-- Fix-10: 原文件为空，补充完整的钱包收入 CRUD SQL -->
+
+    <select id="searchIncomeByDriver" parameterType="Map" resultType="HashMap">
+        SELECT CAST(id AS CHAR) AS id,
+               uuid,
+               CAST(amount AS CHAR) AS amount,
+               type,
+               status,
+               remark,
+               DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') AS createTime
+        FROM tb_wallet_income
+        WHERE driver_id = #{driverId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        <if test="startDate != null">
+            AND DATE(create_time) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND DATE(create_time) &lt;= #{endDate}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{start}, #{length}
+    </select>
+
+    <select id="searchIncomeCount" parameterType="Map" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_wallet_income
+        WHERE driver_id = #{driverId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+    </select>
+
+    <insert id="insertIncome" parameterType="Map" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_wallet_income(uuid, driver_id, amount, type, status, remark)
+        VALUES (#{uuid}, #{driverId}, #{amount}, #{type}, #{status}, #{remark})
+    </insert>
+
+    <update id="updateIncomeStatus" parameterType="Map">
+        UPDATE tb_wallet_income
+        SET status = #{status}
+        WHERE uuid = #{uuid}
+          AND driver_id = #{driverId}
+    </update>
+
+    <select id="searchIncomeByMonth" parameterType="Map" resultType="HashMap">
+        SELECT CAST(id AS CHAR) AS id,
+               CAST(amount AS CHAR) AS amount,
+               remark,
+               DATE_FORMAT(create_time, '%Y-%m-%d') AS date,
+               DATE_FORMAT(create_time, '%H:%i:%s') AS time
+        FROM tb_wallet_income
+        WHERE driver_id = #{driverId}
+          AND DATE_FORMAT(create_time, '%Y-%m') = #{month}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="sumIncomeInMonth" parameterType="Map" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM tb_wallet_income
+        WHERE driver_id = #{driverId}
+          AND DATE_FORMAT(create_time, '%Y-%m') = #{month}
+    </select>
+
+    <select id="sumIncomeInDay" parameterType="Map" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM tb_wallet_income
+        WHERE driver_id = #{driverId}
+          AND DATE(create_time) = #{day}
+    </select>
+
 </mapper>

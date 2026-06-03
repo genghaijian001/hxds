@@ -13,7 +13,10 @@
 export default {
 	data() {
 		return {
-			
+			icon: {
+				color: '#8A8B8F',
+				'margin-top': '-1rpx'
+			}
 		};
 	},
 	methods: {},

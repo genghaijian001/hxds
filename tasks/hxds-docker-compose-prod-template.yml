@@ -1,0 +1,126 @@
+name: hxds-prod
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hxds-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: "CHANGE_ME_MYSQL_ROOT_PASSWORD"
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --max_connections=500
+      - --sql_mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    ports:
+      - "3306:3306"
+    volumes:
+      - /opt/hxds/data/mysql:/var/lib/mysql
+      - /opt/hxds/init/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - hxds-net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: hxds-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - "CHANGE_ME_REDIS_PASSWORD"
+      - --maxmemory-policy
+      - noeviction
+    ports:
+      - "6379:6379"
+    volumes:
+      - /opt/hxds/data/redis:/data
+    networks:
+      - hxds-net
+
+  mongodb:
+    image: mongo:6.0
+    container_name: hxds-mongodb
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: "CHANGE_ME_MONGO_PASSWORD"
+    ports:
+      - "27017:27017"
+    volumes:
+      - /opt/hxds/data/mongo:/data/db
+    networks:
+      - hxds-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: hxds-rabbitmq
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      RABBITMQ_DEFAULT_USER: hxds
+      RABBITMQ_DEFAULT_PASS: "CHANGE_ME_RABBITMQ_PASSWORD"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - /opt/hxds/data/rabbitmq:/var/lib/rabbitmq
+    networks:
+      - hxds-net
+
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: hxds-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: "CHANGE_ME_MYSQL_ROOT_PASSWORD"
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: "CHANGE_ME_NACOS_AUTH_TOKEN"
+      NACOS_AUTH_IDENTITY_KEY: "CHANGE_ME_NACOS_IDENTITY_KEY"
+      NACOS_AUTH_IDENTITY_VALUE: "CHANGE_ME_NACOS_IDENTITY_VALUE"
+      JVM_XMS: 512m
+      JVM_XMX: 512m
+      JVM_XMN: 256m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    volumes:
+      - /opt/hxds/data/nacos/logs:/home/nacos/logs
+      - /opt/hxds/data/nacos/data:/home/nacos/data
+      - /opt/hxds/init/nacos/mysql-schema.sql:/home/nacos/conf/mysql-schema.sql:ro
+    depends_on:
+      - mysql
+    networks:
+      - hxds-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: hxds-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      TZ: Asia/Shanghai
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: "CHANGE_ME_MINIO_PASSWORD"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - /opt/hxds/data/minio:/data
+    networks:
+      - hxds-net
+
+networks:
+  hxds-net:
+    driver: bridge

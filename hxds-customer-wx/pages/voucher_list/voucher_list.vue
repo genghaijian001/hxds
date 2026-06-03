@@ -13,7 +13,7 @@
 		</view>
 
 		<scroll-view scroll-y :style="swipperStyle" @scrolltolower="onreachBottom" v-if="current == 0">
-			<view class="voucher" v-for="one in voucherList">
+			<view class="voucher" v-for="one in voucherList" :key="one.id">
 				<view class="left green">
 					<view class="row">
 						<text class="amount">{{ one.discount }}</text>
@@ -37,7 +37,7 @@
 		</scroll-view>
 
 		<scroll-view scroll-y :style="swipperStyle" @scrolltolower="onreachBottom" v-if="current == 1">
-			<view class="voucher" v-for="one in voucherList">
+			<view class="voucher" v-for="one in voucherList" :key="one.id">
 				<view class="left orange">
 					<view class="row">
 						<text class="amount">{{ one.discount }}</text>
@@ -61,7 +61,7 @@
 		</scroll-view>
 
 		<scroll-view scroll-y :style="swipperStyle" @scrolltolower="onreachBottom" v-if="current == 2">
-			<view class="voucher" v-for="one in voucherList" @tap="takeVoucher(one.id, one.uuid)">
+			<view class="voucher" v-for="one in voucherList" :key="one.id" @tap="takeVoucher(one.id, one.uuid)">
 				<view class="left red">
 					<view class="row">
 						<text class="amount">{{ one.discount }}</text>
@@ -121,6 +121,7 @@ export default {
 			if (ref.current == 0) {
 				ref.ajax(ref.url.searchUnUseVoucherByPage, 'POST', data, function(resp) {
 					let result = resp.data.result;
+					if (!result) return;
 					ref.list[0].count = result.totalCount;
 					if (!result.hasOwnProperty('list') || result.list.length == 0) {
 						ref.isLastPage = true;
@@ -138,6 +139,7 @@ export default {
 			} else if (ref.current == 1) {
 				ref.ajax(ref.url.searchUsedVoucherByPage, 'POST', data, function(resp) {
 					let result = resp.data.result;
+					ref.list[1].count = result.totalCount;
 					if (!result.hasOwnProperty('list') || result.list.length == 0) {
 						ref.isLastPage = true;
 						uni.showToast({
@@ -154,6 +156,7 @@ export default {
 			} else if (ref.current == 2) {
 				ref.ajax(ref.url.searchUnTakeVoucherByPage, 'POST', data, function(resp) {
 					let result = resp.data.result;
+					ref.list[2].count = result.totalCount;
 					if (!result.hasOwnProperty('list') || result.list.length == 0) {
 						ref.isLastPage = true;
 						uni.showToast({
@@ -223,7 +226,7 @@ export default {
 	},
 	onLoad: function() {
 		let that = this;
-		let windowHeight = uni.getSystemInfoSync().windowHeight;
+		let windowHeight = uni.getWindowInfo().windowHeight;
 		that.windowHeight = windowHeight;
 		that.swipperStyle = `height:${that.windowHeight - 70}px;`;
 		that.loadPageData(that);

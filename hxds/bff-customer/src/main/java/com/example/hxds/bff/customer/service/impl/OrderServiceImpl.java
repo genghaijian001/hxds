@@ -6,7 +6,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.NumberUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.bff.customer.controller.form.*;
 import com.example.hxds.bff.customer.feign.*;
 import com.example.hxds.bff.customer.service.OrderService;
@@ -16,22 +16,35 @@ import com.example.hxds.common.util.R;
 import com.example.hxds.common.wxpay.MyWXPayConfig;
 import com.example.hxds.common.wxpay.WXPay;
 import com.example.hxds.common.wxpay.WXPayUtil;
+import com.wechat.pay.java.core.RSAPublicKeyConfig;
+import com.wechat.pay.java.service.payments.jsapi.JsapiService;
+import com.wechat.pay.java.service.payments.jsapi.JsapiServiceExtension;
+import com.wechat.pay.java.service.payments.jsapi.model.Amount;
+import com.wechat.pay.java.service.payments.jsapi.model.Payer;
+import com.wechat.pay.java.service.payments.jsapi.model.PrepayRequest;
+import com.wechat.pay.java.service.payments.jsapi.model.PrepayWithRequestPaymentResponse;
+import com.wechat.pay.java.service.payments.jsapi.model.QueryOrderByOutTradeNoRequest;
+import com.wechat.pay.java.service.payments.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+
+    @Value("${wx.notify-url}")
+    private String wxPayNotifyUrl;
 
     @Resource
     private MpsServiceApi mpsServiceApi;
@@ -57,9 +70,14 @@ public class OrderServiceImpl implements OrderService {
     @Resource
     private MyWXPayConfig myWXPayConfig;
 
+    @Resource
+    private RSAPublicKeyConfig rsaPublicKeyConfig;
+
+    @Value("${wx.v3.mch-id}")
+    private String wxV3MchId;
+
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public HashMap createNewOrder(CreateNewOrderForm form) {
         Long customerId = form.getCustomerId();
         String startPlace = form.getStartPlace(); //订单起点
@@ -69,6 +87,13 @@ public class OrderServiceImpl implements OrderService {
         String endPlaceLatitude = form.getEndPlaceLatitude();
         String endPlaceLongitude = form.getEndPlaceLongitude();
         String favourFee = form.getFavourFee();  //顾客好处费
+
+        // Fix-9: 幂等键防止重复下单（30秒内同一乘客同一起点不能重复提交）
+        String idempotencyKey = "create_order#" + customerId + "#" + startPlaceLatitude + "#" + startPlaceLongitude;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(idempotencyKey))) {
+            throw new HxdsException("您的订单正在处理中，请勿重复提交");
+        }
+        redisTemplate.opsForValue().set(idempotencyKey, "1", 30, TimeUnit.SECONDS);
 
         /**
          *
@@ -191,8 +216,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String deleteUnAcceptOrder(DeleteUnAcceptOrderForm form) {
         R r = odrServiceApi.deleteUnAcceptOrder(form);
         String result = MapUtil.getStr(r, "result");
@@ -254,8 +278,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public HashMap createWxPayment(long orderId, long customerId) {
         /**
          * 1.先查询订单是否为6状态，其他状态都不可以生成支付订单
@@ -277,8 +300,8 @@ public class OrderServiceImpl implements OrderService {
         /**
          * 3.修改实付金额
          */
+        // API-1修复: 移除重复的 setOrderId，补充 setVoucherFee
         UpdateBillPaymentForm form_3 = new UpdateBillPaymentForm();
-        form_3.setOrderId(orderId);
         form_3.setOrderId(orderId);
         form_3.setRealPay(amount);
         form_3.setVoucherFee(discount);
@@ -300,67 +323,117 @@ public class OrderServiceImpl implements OrderService {
         String driverOpenId = MapUtil.getStr(r, "result");
 
         /**
-         * 6. 创建支付订单
+         * 6. 创建V3支付订单
          */
         try {
-            WXPay wxPay = new WXPay(myWXPayConfig);
-            HashMap param = new HashMap();
-            param.put("nonce_str", WXPayUtil.generateNonceStr());//随机字符串
-            param.put("body", "代驾费");
-            param.put("out_trade_no", uuid);
-            //充值金额转换成分为单位，并且让BigDecimal取整数
-            param.put("total_fee", NumberUtil.mul(amount, "100").setScale(0, RoundingMode.FLOOR).toString());
-            //param.put("total_fee", "4");
-            param.put("spbill_create_ip", "127.0.0.1");
-            //这里要修改成内网穿透的公网URL
-            param.put("notify_url", "http://s2.nsloop.com:8955/hxds-odr/order/recieveMessage");
-            param.put("trade_type", "JSAPI");
-            param.put("openid", customerOpenId);
-            param.put("attach", driverOpenId);
-            param.put("profit_sharing", "Y"); //支付需要分账
-            Map<String, String> result = wxPay.unifiedOrder(param);
-            System.out.println(result);
+            JsapiServiceExtension service = new JsapiServiceExtension.Builder()
+                    .config(rsaPublicKeyConfig)
+                    .build();
 
+            PrepayRequest prepayRequest = new PrepayRequest();
+            prepayRequest.setAppid(myWXPayConfig.getAppID());
+            prepayRequest.setMchid(wxV3MchId);
+            prepayRequest.setDescription("代驾费");
+            prepayRequest.setOutTradeNo(uuid);
+            prepayRequest.setNotifyUrl(wxPayNotifyUrl);
+            prepayRequest.setAttach(driverOpenId);
 
-            //String prepayId = result.get("prepay_id");
-            String prepayId = IdUtil.simpleUUID();
-            if (prepayId != null) {
-                /**
-                 * 7.更新订单记录中的prepay_ _id字段值
-                 */
-                UpdateOrderPrepayIdForm form_6 = new UpdateOrderPrepayIdForm();
-                form_6.setOrderId(orderId);
-                form_6.setPrepayId(prepayId);
-                odrServiceApi.updateOrderPrepayId(form_6);
+            Amount amountObj = new Amount();
+            amountObj.setTotal(NumberUtil.mul(amount, "100").setScale(0, RoundingMode.HALF_UP).intValue());
+            amountObj.setCurrency("CNY");
+            prepayRequest.setAmount(amountObj);
 
-                map.clear();
-                //map.put("appId", myWXPayConfig.getAppID());
-                map.put("appId", "wx8888888888888888");
-                String timeStamp = new Date().getTime() + "";
-                map.put("timeStamp", timeStamp);
-                //String nonceStr = WXPayUtil.generateNonceStr();
-                String nonceStr = "5K8264ILTKCH16CQ2502SI8ZNMTM67VS";
-                map.put("nonceStr", nonceStr);
-                map.put("package", "prepay_id=" + prepayId);
-                map.put("signType", "MD5");
-                //String paySign = WXPayUtil.generateSignature(map, myWXPayConfig.getKey());
-                String paySign ="C380BEC2BFD727A4B6845133519F3AD6";
+            Payer payer = new Payer();
+            payer.setOpenid(customerOpenId);
+            prepayRequest.setPayer(payer);
 
-                map.clear();
-                map.put("package", "prepay_id=" + prepayId);
-                map.put("timeStamp", timeStamp);
-                map.put("nonceStr", nonceStr);
-                map.put("paySign", paySign);
-                map.put("uuid", uuid);
-                return map;
-            } else {
-                log.error("创建支付订单失败");
-                throw new HxdsException("创建支付订单失败");
+            PrepayWithRequestPaymentResponse resp = service.prepayWithRequestPayment(prepayRequest);
+            log.info("微信V3统一下单成功: packageVal={}", resp.getPackageVal());
+
+            String packageVal = resp.getPackageVal(); // "prepay_id=xxx"
+            String prepayId = packageVal.replace("prepay_id=", "");
+
+            /**
+             * 7.更新订单记录中的prepay_id字段值
+             */
+            UpdateOrderPrepayIdForm form_6 = new UpdateOrderPrepayIdForm();
+            form_6.setOrderId(orderId);
+            form_6.setPrepayId(prepayId);
+            odrServiceApi.updateOrderPrepayId(form_6);
+
+            odrServiceApi.updateBillPayment(form_3);
+
+            map.clear();
+            map.put("appId", resp.getAppId());
+            map.put("timeStamp", resp.getTimeStamp());
+            map.put("nonceStr", resp.getNonceStr());
+            map.put("package", packageVal);
+            map.put("signType", resp.getSignType());
+            map.put("paySign", resp.getPaySign());
+            map.put("uuid", uuid);
+            return map;
+        } catch (Exception e) {
+            log.error("创建V3支付订单失败", e);
+            throw new HxdsException("创建支付订单失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public String updateOrderAboutPayment(UpdateOrderAboutPaymentForm form) {
+        long orderId = form.getOrderId();
+        long customerId = StpUtil.getLoginIdAsLong();
+
+        // 先查当前状态，若回调已处理（状态>=7）直接返回成功
+        SearchOrderStatusForm statusForm = new SearchOrderStatusForm();
+        statusForm.setOrderId(orderId);
+        statusForm.setCustomerId(customerId);
+        R r = odrServiceApi.searchOrderStatus(statusForm);
+        Integer status = MapUtil.getInt(r, "result");
+        if (status != null && status >= 7) {
+            return "付款成功";
+        }
+
+        // 回调尚未到达，用V3接口主动查询
+        try {
+            ValidCanPayOrderForm canPayForm = new ValidCanPayOrderForm();
+            canPayForm.setOrderId(orderId);
+            canPayForm.setCustomerId(customerId);
+            r = odrServiceApi.validCanPayOrder(canPayForm);
+            HashMap map = (HashMap) r.get("result");
+            String uuid = MapUtil.getStr(map, "uuid");
+
+            JsapiService service = new JsapiService.Builder()
+                    .config(rsaPublicKeyConfig)
+                    .build();
+
+            QueryOrderByOutTradeNoRequest queryReq = new QueryOrderByOutTradeNoRequest();
+            queryReq.setMchid(wxV3MchId);
+            queryReq.setOutTradeNo(uuid);
+
+            Transaction transaction = service.queryOrderByOutTradeNo(queryReq);
+            if (transaction.getTradeState() == Transaction.TradeStateEnum.SUCCESS) {
+                // 主动查询确认付款成功，更新DB状态为7，确保driver端轮询能感知
+                String transactionId = transaction.getTransactionId();
+                Integer payerTotal = transaction.getAmount().getPayerTotal();
+                String realPay = new java.math.BigDecimal(payerTotal)
+                        .divide(new java.math.BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP)
+                        .toString();
+                UpdateOrderPayStatusForm payStatusForm = new UpdateOrderPayStatusForm();
+                payStatusForm.setUuid(uuid);
+                payStatusForm.setTransactionId(transactionId);
+                payStatusForm.setRealPay(realPay);
+                try {
+                    odrServiceApi.updateOrderPayStatus(payStatusForm);
+                } catch (Exception ex) {
+                    log.warn("更新订单支付状态失败(不阻断): {}", ex.getMessage());
+                }
+                return "付款成功";
             }
         } catch (Exception e) {
-            log.error("创建支付订单失败", e);
-            throw new HxdsException("创建支付订单失败");
+            log.warn("主动查询V3支付状态失败: {}", e.getMessage());
         }
+
+        return "付款处理中，请稍候";
     }
 
     @Override

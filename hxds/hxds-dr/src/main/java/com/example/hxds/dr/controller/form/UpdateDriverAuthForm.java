@@ -2,7 +2,7 @@ package com.example.hxds.dr.controller.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 @Data
 @Schema(description = "更新司机认证信息表单")

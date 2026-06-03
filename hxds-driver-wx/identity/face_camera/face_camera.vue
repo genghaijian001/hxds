@@ -32,7 +32,7 @@ export default {
 		return {
 			mode: 'verificate',
 			photoPath: '',
-			showCamera: true,
+			showCamera: false,
 			showImage: false,
 			audio: null
 		};
@@ -52,7 +52,7 @@ export default {
 						filePath:that.photoPath,
 						encoding:"base64",
 						success:function(resp){
-							let base64='data:image:/png;base64,'+resp.data
+							let base64='data:image/png;base64,'+resp.data
 							let url=null
 							if(that.mode=="create"){
 								//创建司机面部模型档案
@@ -103,7 +103,34 @@ export default {
 		let audio=uni.createInnerAudioContext();
 		that.audio=audio
 		audio.src="/static/voice/voice_5.mp3"
-		audio.play()
+		// 检查相机权限后再显示组件
+		wx.getSetting({
+			success(res) {
+				if (res.authSetting['scope.camera'] === false) {
+					// 已拒绝，引导去设置
+					uni.showModal({
+						title: '需要相机权限',
+						content: '人脸识别需要访问摄像头，请在设置中允许',
+						confirmText: '去设置',
+						cancelText: '取消',
+						success(r) { if (r.confirm) wx.openSetting(); }
+					});
+				} else if (res.authSetting['scope.camera'] === undefined) {
+					// 首次请求
+					wx.authorize({
+						scope: 'scope.camera',
+						success() { that.showCamera = true; audio.play(); },
+						fail() {
+							uni.showToast({ icon: 'none', title: '未授权相机权限，无法拍照', duration: 2000 });
+						}
+					});
+					return;
+				} else {
+					that.showCamera = true;
+				}
+				audio.play();
+			}
+		});
 	},
 	onHide: function() {
 		if(this.audio!=null){

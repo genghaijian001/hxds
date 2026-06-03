@@ -52,7 +52,7 @@
             </view>
             <view v-show="workStatus == '停止接单'">
                 <map id="map" :longitude="longitude" :latitude="latitude" scale="15" :style="contentStyle" :enable-traffic="true" :show-location="true" :enable-poi="true">
-                    <cover-image class="location" src="../../static/workbench/location.png" @tap="returnLocationHandle()"></cover-image>
+                    <image class="location" src="../../static/workbench/location.png" @tap="returnLocationHandle()"></image>
                 </map>
             </view>
             <scroll-view scroll-y="true" :style="contentStyle" v-show="workStatus == '开始接单'">
@@ -61,7 +61,8 @@
                         <image src="../../static/workbench/no-order.png" mode="widthFix" class="no-order-img"></image>
                         <view class="no-order-title">目前暂无订单</view>
                     </view>
-                    <view v-if="newOrder != null">
+                    <!-- Fix-15: 改用 v-else，避免 Vue 重复计算条件 -->
+                    <view v-else>
                         <view class="line-1">
                             <view>
                                 <view class="sub-time">距离您</view>
@@ -191,6 +192,10 @@
                     <text>充值</text>
                 </view>
             </view>
+            <view v-if="executeOrder && executeOrder.id" class="float-ball" @tap="goToExecuteOrder">
+                <text class="float-ball-text">进行中</text>
+                <text class="float-ball-sub">点击查看</text>
+            </view>
         </view>
         <u-top-tips ref="uTips"></u-top-tips>
         <u-toast ref="uToast" />
@@ -267,6 +272,7 @@ export default {
                 createTime: ''
             },
             reciveNewOrderTimer: null,
+            locationRefreshTimer: null,
             playFlag: false,
             audio: null,
             canAcceptOrder: false,
@@ -301,6 +307,39 @@ export default {
                 this.service.listenIcon = '../../static/workbench/service-icon-7.png';
                 this.service.listenStyle = 'color:#FF4D4D';
                 this.service.listenText = '不听订单';
+            }
+        },
+        startLocationRefreshTimer: function() {
+            let that = this;
+            function doRefresh() {
+                let token = uni.getStorageSync('token');
+                if (!token || uni.getStorageSync('workStatus') != '开始接单') return;
+                let settings = uni.getStorageSync('settings') || { orderDistance: 0, rangeDistance: 5, orientation: '' };
+                let orientation = settings.orientation;
+                uni.request({
+                    url: that.url.updateLocationCache,
+                    method: 'POST',
+                    header: { token: token },
+                    data: {
+                        latitude: that.latitude,
+                        longitude: that.longitude,
+                        orderDistance: settings.orderDistance || 0,
+                        rangeDistance: settings.rangeDistance || 5,
+                        orientateLongitude: orientation ? orientation.longitude : null,
+                        orientateLatitude: orientation ? orientation.latitude : null
+                    }
+                });
+            }
+            doRefresh();
+            if (that.locationRefreshTimer != null) {
+                clearInterval(that.locationRefreshTimer);
+            }
+            that.locationRefreshTimer = setInterval(doRefresh, 30000);
+        },
+        stopLocationRefreshTimer: function() {
+            if (this.locationRefreshTimer != null) {
+                clearInterval(this.locationRefreshTimer);
+                this.locationRefreshTimer = null;
             }
         },
         returnLocationHandle: function() {
@@ -342,6 +381,7 @@ export default {
                                 if (that.reciveNewOrderTimer == null) {
                                     that.reciveNewOrderTimer = that.createTimer(that);
                                 }
+                                that.startLocationRefreshTimer();
                             }
                         });
                     }
@@ -377,6 +417,7 @@ export default {
                                 //销毁接收新订单消息的定时器
                                 clearInterval(that.reciveNewOrderTimer);
                                 that.reciveNewOrderTimer = null;
+                                that.stopLocationRefreshTimer();
                                 that.playFlag = false;
                             }
                         });
@@ -438,6 +479,9 @@ export default {
                     success: function(resp) {
                         audio.src = resp.filename;
                         audio.play();
+                        audio.onError(function() {
+                            ref.canAcceptOrder = true;
+                        });
                         audio.onEnded(function() {
                             ref.canAcceptOrder = true;
                             let verification = uni.getStorageSync('verification');
@@ -527,6 +571,13 @@ export default {
         },
         acceptHandle: function() {
             let that = this;
+            if (that.executeOrder && that.executeOrder.id) {
+                uni.showToast({ icon: 'none', title: '您有正在进行中的订单' });
+                setTimeout(function() {
+                    uni.navigateTo({ url: '../../execution/move/move?orderId=' + that.executeOrder.id });
+                }, 1500);
+                return;
+            }
             if (!that.canAcceptOrder || that.accepting) {
                 return;
             }
@@ -614,6 +665,11 @@ export default {
             let that = this;
             uni.makePhoneCall({
                 phoneNumber: '10086'
+            });
+        },
+        goToExecuteOrder: function() {
+            uni.navigateTo({
+                url: '../../execution/move/move?orderId=' + this.executeOrder.id
             });
         },
         showMoveHandle: function() {
@@ -871,6 +927,13 @@ export default {
                         carType: result.carType,
                         createTime: result.createTime
                     };
+                    // 结束代驾后(status=5)直接跳转到输入费用页面
+                    if (result.status == 5) {
+                        uni.navigateTo({
+                            url: '../../order/enter_fee/enter_fee?orderId=' + result.id + '&customerId=' + result.customerId
+                        });
+                        return;
+                    }
                     let map = {
                         '2': '接客户',
                         '3': '到达代驾点',
@@ -931,6 +994,15 @@ export default {
             });
 
             let workStatus = uni.getStorageSync('workStatus');
+            // 同步响应式数据：模板所有 v-show 依赖 that.workStatus
+            // 若不同步，从付款流程返回后 that.workStatus 仍为 '结束代驾'，地图和按钮全部隐藏
+            that.workStatus = workStatus;
+
+            // 订单已完成付款或处于空闲接单状态，清除进行中订单状态，消除悬浮球
+            // '停止接单'：主动停止；'开始接单'：完成订单后恢复接单（两者均无正在执行的订单）
+            if (workStatus == '停止接单' || workStatus == '开始接单') {
+                that.executeOrder = {};
+            }
 
             //判断工作状态，是否定时轮询接单
             if (workStatus == '开始接单') {
@@ -939,6 +1011,7 @@ export default {
                 that.playFlag = false;
                 //创建接收新订单消息的定时器，每隔5秒钟接收一次新订单消息
                 that.reciveNewOrderTimer = that.createTimer(that);
+                that.startLocationRefreshTimer();
             }
 
             //初始化控件高度
@@ -959,6 +1032,7 @@ export default {
         }
         clearInterval(this.reciveNewOrderTimer);
         this.reciveNewOrderTimer = null;
+        this.stopLocationRefreshTimer();
         this.playFlag = false;
     }
 };

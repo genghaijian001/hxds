@@ -1,10 +1,12 @@
+USE hxds_rule;
+
 /*
  Navicat Premium Data Transfer
 
  Source Server         : ShardingSphere
  Source Server Type    : MySQL
  Source Server Version : 50722
- Source Host           : 192.168.99.232:3307
+ Source Host           : localhost:3306
  Source Schema         : hxds
 
  Target Server Type    : MySQL

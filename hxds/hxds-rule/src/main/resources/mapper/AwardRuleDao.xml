@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hxds.rule.db.dao.AwardRuleDao">
+    <select id="searchCurrentRule" parameterType="String" resultType="com.example.hxds.rule.db.pojo.AwardRuleEntity">
+        SELECT id,
+               code,
+               name,
+               AES_DECRYPT(UNHEX(rule),#{key}) AS rule,
+               create_time AS createTime
+        FROM tb_award_rule
+        WHERE `status` = 1
+        ORDER BY id DESC LIMIT 1;
+    </select>
+</mapper>

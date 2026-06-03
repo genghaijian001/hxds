@@ -1,7 +1,8 @@
 package com.example.hxds.cst.service.impl;
 
 import cn.hutool.core.map.MapUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.common.exception.HxdsException;
 import com.example.hxds.common.util.MicroAppUtil;
 import com.example.hxds.cst.db.dao.CustomerDao;
@@ -9,7 +10,7 @@ import com.example.hxds.cst.service.CustomerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,62 +23,127 @@ public class CustomerServiceImpl implements CustomerService {
     @Resource
     private MicroAppUtil microAppUtil;
 
-    /**
-     * 注册新用户
-     * @param param
-     * @return
-     */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String registerNewCustomer(Map param) {
         String code = MapUtil.getStr(param, "code");
         String openId = microAppUtil.getOpenId(code);
-        HashMap tempParam = new HashMap() {{
-            put("openId", openId);
-        }};
+        HashMap<String, Object> tempParam = new HashMap<>();
+        tempParam.put("openId", openId);
         if (customerDao.hasCustomer(tempParam) != 0) {
-            throw new HxdsException("该微信无法注册");
+            throw new HxdsException("该微信无法重复注册");
         }
+
+        String tel = StrUtil.trim(MapUtil.getStr(param, "tel"));
+        if (StrUtil.isNotBlank(tel) && StrUtil.isNotBlank(customerDao.searchCustomerIdByTel(tel))) {
+            throw new HxdsException("该手机号已绑定其他账号");
+        }
+
         param.put("openId", openId);
+        param.put("photo", normalizePhoto(MapUtil.getStr(param, "photo")));
         customerDao.registerNewCustomer(param);
-        String customerId = customerDao.searchCustomerId(openId);
-        return customerId;
+        return customerDao.searchCustomerId(openId);
     }
 
     @Override
-    public String login(String code) {
+    @Transactional
+    @GlobalTransactional
+    public String login(Map param) {
+        String code = MapUtil.getStr(param, "code");
+        String tel = StrUtil.trim(MapUtil.getStr(param, "tel"));
         String openId = microAppUtil.getOpenId(code);
         String customerId = customerDao.login(openId);
-        customerId=(customerId != null ? customerId : "");
-        return customerId;
+
+        if (StrUtil.isBlank(tel)) {
+            return customerId != null ? customerId : "";
+        }
+
+        String telCustomerId = customerDao.searchCustomerIdByTel(tel);
+        if (StrUtil.isNotBlank(customerId)) {
+            if (StrUtil.isNotBlank(telCustomerId) && !telCustomerId.equals(customerId)) {
+                throw new HxdsException("该手机号已绑定其他微信账号");
+            }
+            if (!customerId.equals(telCustomerId)) {
+                HashMap<String, Object> updateParam = new HashMap<>();
+                updateParam.put("customerId", ConvertCustomerId(customerId));
+                updateParam.put("tel", tel);
+                customerDao.updateCustomerTel(updateParam);
+            }
+            return customerId;
+        }
+
+        if (StrUtil.isNotBlank(telCustomerId)) {
+            throw new HxdsException("该手机号已绑定其他微信账号，请使用原微信登录");
+        }
+
+        HashMap<String, Object> registerParam = new HashMap<>();
+        registerParam.put("openId", openId);
+        registerParam.put("nickname", buildDefaultNickname(tel));
+        registerParam.put("sex", "未知");
+        registerParam.put("photo", "");
+        registerParam.put("tel", tel);
+        customerDao.registerNewCustomer(registerParam);
+        return customerDao.searchCustomerId(openId);
     }
 
-    /**
-     * 加载执行订单，查询乘客信息
-     * @param customerId
-     * @return
-     */
     @Override
     public HashMap searchCustomerInfoInOrder(long customerId) {
-        HashMap map = customerDao.searchCustomerInfoInOrder(customerId);
-        return map;
+        return customerDao.searchCustomerInfoInOrder(customerId);
     }
 
-    /**
-     * mis查询乘客信息  折叠面板
-     * @param customerId
-     * @return
-     */
     @Override
     public HashMap searchCustomerBriefInfo(long customerId) {
-        HashMap map = customerDao.searchCustomerBriefInfo(customerId);
-        return map;
+        return customerDao.searchCustomerBriefInfo(customerId);
     }
 
     @Override
     public String searchCustomerOpenId(long customerId) {
-        String openId = customerDao.searchCustomerOpenId(customerId);
-        return openId;
+        return customerDao.searchCustomerOpenId(customerId);
+    }
+
+    @Override
+    public HashMap searchCustomerProfile(long customerId) {
+        return customerDao.searchCustomerProfile(customerId);
+    }
+
+    @Override
+    @Transactional
+    public int updateCustomerProfile(Map param) {
+        return customerDao.updateCustomerProfile(param);
+    }
+
+    @Override
+    @Transactional
+    public int updateCustomerPhoto(Map param) {
+        return customerDao.updateCustomerPhoto(param);
+    }
+
+    @Override
+    @Transactional
+    public int updateCustomerTel(Map param) {
+        String tel = StrUtil.trim(MapUtil.getStr(param, "tel"));
+        String currentOwner = customerDao.searchCustomerIdByTel(tel);
+        String customerId = String.valueOf(MapUtil.getLong(param, "customerId"));
+        if (StrUtil.isNotBlank(currentOwner) && !currentOwner.equals(customerId)) {
+            throw new HxdsException("该手机号已绑定其他账号");
+        }
+        return customerDao.updateCustomerTel(param);
+    }
+
+    private String normalizePhoto(String photo) {
+        if (StrUtil.isBlank(photo) || photo.startsWith("http://") || photo.startsWith("https://")) {
+            return StrUtil.nullToDefault(photo, "");
+        }
+        return "";
+    }
+
+    private String buildDefaultNickname(String tel) {
+        String suffix = tel.length() >= 4 ? tel.substring(tel.length() - 4) : tel;
+        return "微信用户" + suffix;
+    }
+
+    private Long ConvertCustomerId(String customerId) {
+        return Long.parseLong(customerId);
     }
 }

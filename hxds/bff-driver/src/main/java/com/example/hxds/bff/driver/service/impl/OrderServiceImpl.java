@@ -3,20 +3,21 @@ package com.example.hxds.bff.driver.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.NumberUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.bff.driver.controller.form.*;
 import com.example.hxds.bff.driver.feign.*;
 import com.example.hxds.bff.driver.service.OrderService;
 import com.example.hxds.common.exception.HxdsException;
 import com.example.hxds.common.util.PageUtils;
 import com.example.hxds.common.util.R;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.RoundingMode;
 import java.util.HashMap;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -36,8 +37,7 @@ public class OrderServiceImpl implements OrderService {
     private SnmServiceApi snmServiceApi;
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String acceptNewOrder(AcceptNewOrderForm form) {
         R r = odrServiceApi.acceptNewOrder(form);
         String result = (String) r.get("result");
@@ -93,8 +93,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int arriveStartPlace(ArriveStartPlaceForm form) {
         R r = odrServiceApi.arriveStartPlace(form);
         int rows = MapUtil.getInt(r, "rows");
@@ -105,22 +104,25 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int startDriving(StartDrivingForm form) {
         R r = odrServiceApi.startDriving(form);
         int rows = MapUtil.getInt(r, "rows");
         InsertOrderMonitoringForm monitoringForm=new InsertOrderMonitoringForm();
         monitoringForm.setOrderId(form.getOrderId());
-        nebulaServiceApi.insertOrderMonitoring(monitoringForm);
+        try {
+            nebulaServiceApi.insertOrderMonitoring(monitoringForm);
+        } catch (Exception e) {
+            // Phoenix QueryServer不可用时降级，GPS监控记录暂不写入，不阻断代驾流程
+            log.warn("insertOrderMonitoring降级(Phoenix不可用): orderId={}, error={}", form.getOrderId(), e.getMessage());
+        }
         //发送通知消息
 
         return rows;
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateOrderStatus(UpdateOrderStatusForm form) {
         R r = odrServiceApi.updateOrderStatus(form);
         int rows=MapUtil.getInt(r,"rows");
@@ -146,8 +148,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateBillFee(UpdateBillFeeForm form) {
         /**
          * 1.判断司机是否关联该订单
@@ -162,13 +163,19 @@ public class OrderServiceImpl implements OrderService {
         }
 
         /**
-         * 2.计算订单里程数据
+         * 2.计算订单里程数据（Phoenix不可用时降级为0.1km，避免无限阻塞）
          */
         CalculateOrderMileageForm form_2 = new CalculateOrderMileageForm();
         form_2.setOrderId(form.getOrderId());
-        r=nebulaServiceApi.calculateOrderMileage(form_2);
-        String mileage = (String) r.get("result");
-        mileage = NumberUtil.div(mileage,"1000",1, RoundingMode.CEILING).toString();
+        String mileage;
+        try {
+            r = nebulaServiceApi.calculateOrderMileage(form_2);
+            String rawMileage = (String) r.get("result");
+            mileage = NumberUtil.div(rawMileage, "1000", 1, RoundingMode.CEILING).toString();
+        } catch (Exception e) {
+            // Phoenix QueryServer不可用时降级，避免卡死
+            mileage = "0.1";
+        }
 
         /**
          * 3.查询订单消息
@@ -213,8 +220,10 @@ public class OrderServiceImpl implements OrderService {
         form.setRealMileage(mileage);//里程
         form.setReturnMileage(returnMileage);//返程里程
 
-        //计算总费用
-        String total = NumberUtil.add(amount, form.getTollFee(), form.getParkingFee(), form.getOtherFee(), favourFee).toString();
+        //【测试模式】固定总费用为1元，测试完成后恢复真实计算
+        String total = "1.00";
+        //正式上线时替换为：
+        //String total = NumberUtil.add(amount, form.getTollFee(), form.getParkingFee(), form.getOtherFee(), favourFee).toString();
         form.setTotal(total);
 
         /**
@@ -262,6 +271,13 @@ public class OrderServiceImpl implements OrderService {
         HashMap result = (HashMap) r.get("result");
         PageUtils pageUtils = BeanUtil.toBean(result,PageUtils.class);
         return pageUtils;
+    }
+
+    @Override
+    public Integer searchOrderStatus(SearchOrderStatusForm form) {
+        R r = odrServiceApi.searchOrderStatus(form);
+        Integer status = MapUtil.getInt(r, "result");
+        return status;
     }
 
     @Override

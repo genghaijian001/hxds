@@ -20,11 +20,11 @@
 				<view :class="amount == 300 ? 'amount active' : 'amount'" @tap="changeHangle(300)">300元</view>
 				<view :class="amount == 500 ? 'amount active' : 'amount'" @tap="changeHangle(500)">500元</view>
 			</view>
-			<view class="desc">点击充值，即表示您已同意“华夏代驾充值规则”</view>
+			<view class="desc">点击充值，即表示您已同意“白光代驾充值规则”</view>
 			<button class="btn" @tap="rechargeHandle()">立即充值</button>
 		</view>
 		<view class="rule-container">
-			<view class="title">华夏代驾充值规则：</view>
+			<view class="title">白光代驾充值规则：</view>
 			<view class="rule">
 				<text class="num">1.</text>
 				充值金额可以用于支付代驾司机在本代驾程序中与顾客间的通话费，以及缴纳罚款等用途；
@@ -35,7 +35,7 @@
 			</view>
 			<view class="rule">
 				<text class="num">3.</text>
-				充值成功后，您的充值金额会实时进入到您在华夏代驾的账户中。如果遇到充值异常可以拨打400-82014447，有专属客服为您解决问题；
+				充值成功后，您的充值金额会实时进入到您在白光代驾的账户中。如果遇到充值异常可以拨打400-82014447，有专属客服为您解决问题；
 			</view>
 			<view class="rule">
 				<text class="num">4.</text>
@@ -50,21 +50,32 @@
 export default {
 	data() {
 		return {
-
+			balance: '0.00',
+			amount: 0
 		};
 	},
 	methods: {
-		
+		changeHangle: function(val) {
+			this.amount = val;
+		},
+		rechargeHandle: function() {
+			if (this.amount == 0) {
+				uni.showToast({ title: '请选择充值金额', icon: 'none' });
+				return;
+			}
+			uni.showToast({ title: '充值功能暂未开放', icon: 'none' });
+		}
 	},
-	onLoad: function() {
-
-	},
+	onLoad: function() {},
 	onShow: function() {
-
+		let that = this;
+		let now = new Date();
+		let month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+		that.ajax(that.url.searchDriverWallet, 'POST', { month: month }, function(resp) {
+			that.balance = resp.data.result.balance;
+		});
 	},
-	onHide: function() {
-
-	}
+	onHide: function() {}
 };
 </script>
 

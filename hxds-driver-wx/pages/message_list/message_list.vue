@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<view class="message-container" v-for="one in list" v-if="list.length > 0" @tap="viewMessageHandle(one.id, one.readFlag, one.refId)">
+		<view class="message-container" v-for="one in list" :key="one.id" v-if="list.length > 0" @tap="viewMessageHandle(one.id, one.readFlag, one.refId)">
 			<view class="top">
 				<view class="title">
 					<image src="../../static/message_list/email-icon-1.png" mode="widthFix" v-if="!one.readFlag"></image>
@@ -23,18 +23,58 @@
 export default {
 	data() {
 		return {
-			
+			page: 1,
+			length: 50,
+			list: [],
+			isLastPage: false
 		};
 	},
 	methods: {
-		
+		loadPageData: function(ref) {
+			let data = {
+				page: ref.page,
+				length: ref.length
+			};
+			ref.ajax(ref.url.searchMessageByPage, 'POST', data, function(resp) {
+				let result = resp.data.result;
+				if (result == null || result.length == 0) {
+					ref.isLastPage = true;
+					return;
+				} else {
+					if (ref.page == 1) {
+						ref.list = [];
+					}
+					ref.list = ref.list.concat(result);
+				}
+			});
+		},
+		viewMessageHandle: function(id, readFlag) {
+			uni.navigateTo({
+				url: `../message/message?id=${id}&readFlag=${readFlag}`
+			});
+		}
 	},
-	
 	onShow: function() {
-		
+		let that = this;
+		that.page = 1;
+		that.isLastPage = false;
+		that.loadPageData(that);
+	},
+	onPullDownRefresh: function() {
+		let that = this;
+		that.page = 1;
+		that.isLastPage = false;
+		that.list = [];
+		that.loadPageData(that);
+		uni.stopPullDownRefresh();
 	},
 	onReachBottom: function() {
-		
+		let that = this;
+		if (that.isLastPage) {
+			return;
+		}
+		that.page = that.page + 1;
+		that.loadPageData(that);
 	}
 };
 </script>

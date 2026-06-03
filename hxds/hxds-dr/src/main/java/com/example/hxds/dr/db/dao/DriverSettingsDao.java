@@ -13,6 +13,8 @@ public interface DriverSettingsDao {
     //查询司机设置
     public String searchDriverSettings(long driverId);
 
+    //更新司机设置
+    public int updateDriverSettings(Map param);
 }
 
 

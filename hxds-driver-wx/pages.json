@@ -34,13 +34,13 @@
 			"path": "pages/order_list/order_list",
 			"style": {
 				"navigationBarTitleText": "我的订单",
-				"enablePullDownRefresh": false
+				"enablePullDownRefresh": true
 			}
 		}, {
 			"path": "pages/message_list/message_list",
 			"style": {
 				"navigationBarTitleText": "系统消息",
-				"enablePullDownRefresh": false
+				"enablePullDownRefresh": true
 			}
 		}, {
 			"path": "pages/mine/mine",
@@ -63,6 +63,12 @@
 				"enablePullDownRefresh": false
 			}
 
+		}
+		, {
+			"path": "pages/ocr_camera/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {
@@ -96,7 +102,7 @@
 	},
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "华夏代驾",
+		"navigationBarTitleText": "白光代驾",
 		"navigationBarBackgroundColor": "#2074FD",
 		"backgroundColor": "#FFFFFF"
 	},
@@ -106,10 +112,7 @@
 					"path": "filling/filling",
 					"style": {
 						"navigationBarTitleText": "实名登记",
-						"enablePullDownRefresh": false,
-						"usingComponents": {
-							"ocr-navigator": "plugin://ocr-plugin/ocr-navigator"
-						}
+						"enablePullDownRefresh": false
 					}
 				}, {
 					"path": "identity_camera/identity_camera",

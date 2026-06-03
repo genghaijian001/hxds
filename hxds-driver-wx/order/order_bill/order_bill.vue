@@ -74,7 +74,7 @@
 				<view class="item">
 					<view class="left">
 						<text class="item-title">系统奖励费</text>
-						<text class="item-desc">华夏代驾系统激励代驾司机的奖励</text>
+						<text class="item-desc">白光代驾系统激励代驾司机的奖励</text>
 					</view>
 					<view class="right">{{ incentiveFee }}</view>
 				</view>
@@ -159,31 +159,7 @@ export default {
 						that.ajax(that.url.updateOrderStatus, 'POST', data, function(resp) {
 							that.workStatus = '等待付款';
 							uni.setStorageSync('workStatus', '等待付款');
-							//页面发生跳转
-							uni.navigateTo({
-								url: '../waiting_payment/waiting_payment?orderId=' + that.orderId
-							});
-						});
-					}
-				}
-			});
-		},
-		sendOrderBill: function() {
-			let that = this;
-			uni.showModal({
-				title: '提示消息',
-				content: '是否发送代驾账单给客户？',
-				success: function(resp) {
-					if (resp.confirm) {
-						let data = {
-							orderId: that.orderId,
-							customerId: that.customerId,
-							status: 6
-						};
-						that.ajax(that.url.updateOrderStatus, 'POST', data, function(resp) {
-							that.workStatus = '等待付款';
-							uni.setStorageSync('workStatus', '等待付款');
-							uni.navigateTo({
+							uni.redirectTo({
 								url: '../waiting_payment/waiting_payment?orderId=' + that.orderId
 							});
 						});

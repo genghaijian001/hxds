@@ -4,8 +4,8 @@ import com.example.hxds.bff.driver.controller.vo.InsertOrderGpsVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 
 @Data

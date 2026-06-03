@@ -11,7 +11,7 @@ import com.example.hxds.mis.api.feign.*;
 import com.example.hxds.mis.api.service.OrderService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

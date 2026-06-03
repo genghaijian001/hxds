@@ -10,7 +10,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">身份证正面</text>
-					<ocr-navigator @onSuccess="scanIdcardFront" certificateType="idCard" :opposite="false"><button class="camera"></button></ocr-navigator>
+					<button class="camera" @tap="takePhoto('idcardFront', '身份证人像面')"></button>
 				</view>
 			</view>
 			<view class="credentials">
@@ -18,7 +18,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">身份证背面</text>
-					<ocr-navigator @onSuccess="scanIdcardBack" certificateType="idCard" :opposite="true"><button class="camera"></button></ocr-navigator>
+					<button class="camera" @tap="takePhoto('idcardBack', '身份证国徽面')"></button>
 				</view>
 			</view>
 			<view class="credentials">
@@ -26,7 +26,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">手持身份证</text>
-					<button class="camera" @tap="takePhoto('idcardHolding')"></button>
+					<button class="camera" @tap="takePhoto('idcardHolding', '手持身份证')"></button>
 				</view>
 			</view>
 			<view class="credentials">
@@ -34,7 +34,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">驾驶证正面</text>
-					<ocr-navigator @onSuccess="scanDrcardFront" certificateType="driverslicense"><button class="camera"></button></ocr-navigator>
+					<button class="camera" @tap="takePhoto('DrcardFront', '驾驶证主页')"></button>
 				</view>
 			</view>
 			<view class="credentials">
@@ -42,7 +42,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">驾驶证背面</text>
-					<button class="camera" @tap="takePhoto('drcardBack')"></button>
+					<button class="camera" @tap="takePhoto('Drcardback', '驾驶证副页')"></button>
 				</view>
 			</view>
 			<view class="credentials">
@@ -50,7 +50,7 @@
 				<view class="cover">
 					<image src="../static/filling/card.png" mode="widthFix" class="card"></image>
 					<text class="desc">手持驾驶证</text>
-					<button class="camera" @tap="takePhoto('drcardHolding')"></button>
+					<button class="camera" @tap="takePhoto('DrcardHolding', '手持驾驶证')"></button>
 				</view>
 			</view>
 		</view>
@@ -95,7 +95,6 @@
 </template>
 
 <script>
-let dayjs = require('dayjs');
 export default {
 	data() {
 		return {
@@ -103,14 +102,7 @@ export default {
 			style: {
 				color: '#FF9900'
 			},
-			cardBackground: [
-				'../static/filling/credentials-bg.jpg',
-				'../static/filling/credentials-bg.jpg',
-				'../static/filling/credentials-bg.jpg',
-				'../static/filling/credentials-bg.jpg',
-				'../static/filling/credentials-bg.jpg',
-				'../static/filling/credentials-bg.jpg'
-			],
+			// 身份证信息
 			idcard: {
 				pid: '',
 				name: '',
@@ -132,6 +124,7 @@ export default {
 				contactName: '',
 				contactTel: ''
 			},
+			// 驾照信息
 			drcard: {
 				issueDate: '',
 				carClass: '',
@@ -141,6 +134,14 @@ export default {
 				drcardBack: '',
 				drcardHolding: ''
 			},
+			cardBackground: [
+				'../static/filling/credentials-bg.jpg',
+				'../static/filling/credentials-bg.jpg',
+				'../static/filling/credentials-bg.jpg',
+				'../static/filling/credentials-bg.jpg',
+				'../static/filling/credentials-bg.jpg',
+				'../static/filling/credentials-bg.jpg'
+			],
 			cosImg: [],
 			currentImg: {},
 			realAuth: uni.getStorageSync('realAuth')
@@ -212,7 +213,7 @@ export default {
 				} else if (type == 'drcardBack') {
 					that.cardBackground[4] = path;
 					that.currentImg['drcardBack'] = data.path;
-					that.idcard.drcardBack = data.path;
+					that.drcard.drcardBack = data.path;
 				} else if (type == 'drcardHolding') {
 					that.cardBackground[5] = path;
 					that.currentImg['drcardHolding'] = data.path;
@@ -221,9 +222,74 @@ export default {
 			});
 			that.$forceUpdate();
 		},
-		takePhoto: function(type) {
+		// takePhoto：导航到拍照页，接收拍照+OCR结果后上传COS并填充表单
+		takePhoto: function(type, title) {
+			let that = this;
 			uni.navigateTo({
-				url: '../identity_camera/identity_camera?type=' + type
+				url: `../../pages/ocr_camera/index?type=${type}&title=${title}`,
+				events: {
+					takePhoto: function(data) {
+						let tempPath = data.tempPath;
+						let ocrResult = data.ocrResult || {};
+
+						// 先更新预览背景，提升体验
+						if (type === 'idcardFront') {
+							that.cardBackground[0] = tempPath;
+						} else if (type === 'idcardBack') {
+							that.cardBackground[1] = tempPath;
+						} else if (type === 'idcardHolding') {
+							that.cardBackground[2] = tempPath;
+						} else if (type === 'DrcardFront') {
+							that.cardBackground[3] = tempPath;
+						} else if (type === 'Drcardback') {
+							that.cardBackground[4] = tempPath;
+						} else if (type === 'DrcardHolding') {
+							that.cardBackground[5] = tempPath;
+						}
+						that.$forceUpdate();
+
+						// 上传图片到COS（私有存储）
+						that.uploadCos(that.url.uploadCosPrivateFile, tempPath, 'driverAuth', function(resp) {
+							let result = JSON.parse(resp.data);
+							let cosPath = result.path;
+							that.cosImg.push(cosPath);
+
+							// 保存COS路径并填充OCR字段
+							if (type === 'idcardFront') {
+								that.currentImg['idcardFront'] = cosPath;
+								that.idcard.idcardFront = cosPath;
+								if (ocrResult.name) that.idcard.name = ocrResult.name;
+								if (ocrResult.sex) that.idcard.sex = ocrResult.sex;
+								if (ocrResult.birthday) that.idcard.birthday = ocrResult.birthday;
+								if (ocrResult.address) {
+									that.idcard.address = ocrResult.address;
+									that.idcard.shortAddress = ocrResult.address.substr(0, 15) + (ocrResult.address.length > 15 ? '...' : '');
+								}
+								if (ocrResult.idcardNo) that.idcard.pid = ocrResult.idcardNo;
+							} else if (type === 'idcardBack') {
+								that.currentImg['idcardBack'] = cosPath;
+								that.idcard.idcardBack = cosPath;
+								if (ocrResult.validDateEnd) that.idcard.expiration = ocrResult.validDateEnd;
+							} else if (type === 'idcardHolding') {
+								that.currentImg['idcardHolding'] = cosPath;
+								that.idcard.idcardHolding = cosPath;
+							} else if (type === 'DrcardFront') {
+								that.currentImg['drcardFront'] = cosPath;
+								that.drcard.drcardFront = cosPath;
+								if (ocrResult.drcardType) that.drcard.carClass = ocrResult.drcardType;
+								if (ocrResult.validInDate) that.drcard.issueDate = ocrResult.validInDate;
+								if (ocrResult.validPeriod) that.drcard.validTo = ocrResult.validPeriod;
+							} else if (type === 'Drcardback') {
+								that.currentImg['drcardBack'] = cosPath;
+								that.drcard.drcardBack = cosPath;
+							} else if (type === 'DrcardHolding') {
+								that.currentImg['drcardHolding'] = cosPath;
+								that.drcard.drcardHolding = cosPath;
+							}
+							that.$forceUpdate();
+						});
+					}
+				}
 			});
 		},
 		enterContent: function(title, key) {
@@ -345,6 +411,57 @@ export default {
 					showCancel: false
 				});
 			}
+		},
+		submit: function() {
+			let that = this;
+			that.$refs.uToast.show({
+				title: '执行中',
+				type: 'loading',
+				duration: 600000
+			});
+
+			// 在提交时，将包含照片路径和文字信息的完整对象发送给后端
+			let data = {
+				idcard: that.idcard,
+				drcard: that.drcard
+			};
+
+			that.ajax(that.url.updateDriverAuth, 'POST', data, function(resp) {
+				that.$refs.uToast.hide();
+				that.$refs.uToast.show({
+					title: '资料上传成功',
+					type: 'success',
+					callback: function() {
+						let realAuth = uni.getStorageSync('realAuth');
+						if (realAuth == 2 || realAuth == 3) {
+							uni.switchTab({
+								url: '/pages/workbench/workbench'
+							});
+						} else {
+							uni.navigateTo({
+								url: '../face_camera/face_camera'
+							});
+						}
+					}
+				});
+				//删除司机上传的临时图片
+				for (let key in that.currentImg) {
+					if (
+						(key == 'idcardFront' && that.currentImg[key] != that.idcard.idcardFront) ||
+						(key == 'idcardBack' && that.currentImg[key] != that.idcard.idcardBack) ||
+						(key == 'idcardHolding' && that.currentImg[key] != that.idcard.idcardHolding) ||
+						(key == 'drcardFront' && that.currentImg[key] != that.drcard.drcardFront) ||
+						(key == 'drcardBack' && that.currentImg[key] != that.drcard.drcardBack) ||
+						(key == 'drcardHolding' && that.currentImg[key] != that.drcard.drcardHolding)
+					) {
+						that.ajax(that.url.deleteCosPrivateFile, 'POST', { pathes: [that.currentImg[key]] }, function(
+							resp
+						) {
+							console.log('删除成功');
+						});
+					}
+				}
+			});
 		}
 	},
 	onLoad: function(options) {

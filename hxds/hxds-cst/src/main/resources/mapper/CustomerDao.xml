@@ -8,36 +8,48 @@
         INSERT INTO tb_customer
         SET open_id = #{openId},
             nickname = #{nickname},
-            sex = #{sex},
-            photo = #{photo},
-            tel = #{tel},
+            sex = IFNULL(#{sex}, '未知'),
+            photo = IFNULL(#{photo}, ''),
+            tel = IFNULL(#{tel}, ''),
             `status` = 1
     </insert>
+
     <select id="hasCustomer" parameterType="Map" resultType="long">
         SELECT COUNT(id) AS ct
         FROM tb_customer
-        WHERE 1=1
-        <if test="openId!=null">
+        WHERE 1 = 1
+        <if test="openId != null">
             AND open_id = #{openId}
         </if>
-        <if test="customerId!=null">
+        <if test="customerId != null">
             AND id = #{customerId}
         </if>
     </select>
+
     <select id="searchCustomerId" parameterType="String" resultType="String">
         SELECT CAST(id AS CHAR) AS id
         FROM tb_customer
         WHERE open_id = #{openId}
     </select>
 
+    <select id="searchCustomerIdByTel" parameterType="String" resultType="String">
+        SELECT CAST(id AS CHAR) AS id
+        FROM tb_customer
+        WHERE `status` != 2
+          AND tel = #{tel}
+          AND tel != ''
+        LIMIT 1
+    </select>
+
     <select id="login" parameterType="String" resultType="String">
         SELECT CAST(id AS CHAR) AS id
         FROM tb_customer
-        WHERE `status` !=2 AND open_id = #{openId}
+        WHERE `status` != 2
+          AND open_id = #{openId}
     </select>
 
     <select id="searchCustomerInfoInOrder" parameterType="long" resultType="HashMap">
-        SELECT IF(sex ='男', '先生', '女士') AS title,
+        SELECT IF(sex = '男', '先生', '女士') AS title,
                tel,
                photo
         FROM tb_customer
@@ -49,14 +61,38 @@
                sex,
                tel
         FROM tb_customer
-        WHERE id=#{customerId}
+        WHERE id = #{customerId}
     </select>
 
     <select id="searchCustomerOpenId" parameterType="long" resultType="String">
         SELECT open_id AS openId
         FROM tb_customer
-        WHERE id=#{customerId}
+        WHERE id = #{customerId}
     </select>
 
+    <select id="searchCustomerProfile" parameterType="long" resultType="HashMap">
+        SELECT CAST(id AS CHAR) AS id, nickname, photo, tel, sex
+        FROM tb_customer
+        WHERE id = #{customerId}
+    </select>
+
+    <update id="updateCustomerProfile" parameterType="Map">
+        UPDATE tb_customer
+        SET nickname = #{nickname},
+            sex = #{sex}
+        WHERE id = #{customerId}
+    </update>
+
+    <update id="updateCustomerPhoto" parameterType="Map">
+        UPDATE tb_customer
+        SET photo = #{photo}
+        WHERE id = #{customerId}
+    </update>
+
+    <update id="updateCustomerTel" parameterType="Map">
+        UPDATE tb_customer
+        SET tel = #{tel}
+        WHERE id = #{customerId}
+    </update>
 
 </mapper>

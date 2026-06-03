@@ -7,6 +7,7 @@ import com.example.hxds.mis.api.controller.form.SearchDriverRealSummaryForm;
 import com.example.hxds.mis.api.controller.form.UpdateDriverRealAuthForm;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "hxds-dr")
 public interface DrServiceApi {
@@ -17,7 +18,7 @@ public interface DrServiceApi {
      * @return
      */
     @PostMapping("/driver/searchDriverByPage")
-    public R searchDriverByPage(SearchDriverByPageForm form);
+    public R searchDriverByPage(@RequestBody SearchDriverByPageForm form);
 
     /**
      * 司机微服务中查询司机实名认证申请
@@ -25,7 +26,7 @@ public interface DrServiceApi {
      * @return
      */
     @PostMapping("/driver/searchDriverRealSummary")
-    public R searchDriverRealSummary(SearchDriverRealSummaryForm form);
+    public R searchDriverRealSummary(@RequestBody SearchDriverRealSummaryForm form);
 
     /**
      * 更新司机实名认证状态
@@ -33,9 +34,9 @@ public interface DrServiceApi {
      * @return
      */
     @PostMapping("/driver/updateDriverRealAuth")
-    public R updateDriverRealAuth(UpdateDriverRealAuthForm form);
+    public R updateDriverRealAuth(@RequestBody UpdateDriverRealAuthForm form);
 
     @PostMapping("/driver/searchDriverBriefInfo")
-    public R searchDriverBriefInfo(SearchDriverBriefInfoForm form);
+    public R searchDriverBriefInfo(@RequestBody SearchDriverBriefInfoForm form);
 
 }

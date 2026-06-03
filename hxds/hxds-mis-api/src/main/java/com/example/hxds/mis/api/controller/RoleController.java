@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -80,7 +80,7 @@ public class RoleController {
             //把该角色关联的用户踢下线
             ArrayList<Integer> list = roleService.searchUserIdByRoleId(form.getId());
             list.forEach(userId -> {
-                StpUtil.logoutByLoginId(userId);
+                StpUtil.kickout(userId);
             });
         }
         return R.ok().put("rows", rows);

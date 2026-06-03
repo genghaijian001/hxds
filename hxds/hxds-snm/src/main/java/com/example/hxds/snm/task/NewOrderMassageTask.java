@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,20 +49,29 @@ public class NewOrderMassageTask {
                     put("distance",message.getDistance());
                     put("favourFee",message.getFavourFee());
                 }};
-                //创建消息属性意向
+                // Fix-7: 添加 deliveryMode=2 持久化消息，防止服务重启丢失
                 AMQP.BasicProperties properties=new AMQP.BasicProperties()
                         .builder()
-                        .contentEncoding("UTF-8").headers(map)
-                        .expiration(ttl+"").build();
+                        .contentEncoding("UTF-8")
+                        .headers(map)
+                        .deliveryMode(2)  // 2=持久化消息，1=非持久化
+                        .expiration(ttl+"")
+                        .build();
 
                 String queueName="queue_" +message.getUserId();  //队列名字
                 String routingKey=message.getUserId();  // routing key
                 //声明队列(持久化缓存消息，消息接收不加锁，消息全部接收完并不删除队列)
                 channel.queueDeclare(queueName,true,false,false,param);
                 channel.queueBind(queueName,exchangeName,routingKey);
+                // Fix-7: 启用发送确认模式，等待 Broker 确认，防止消息静默丢失
+                channel.confirmSelect();
                 //向交换机发送消息，并附带routing key
                 channel.basicPublish(exchangeName,routingKey,properties,("新订单" +message.getOrderId()).getBytes());
-                log.debug(message.getUserId()+ "的新订单消息发送成功");
+                // 等待 Broker 确认（最多5秒），超时则抛异常触发重试
+                if (!channel.waitForConfirms(5000)) {
+                    throw new HxdsException("RabbitMQ 消息发送未被确认，userId=" + message.getUserId());
+                }
+                log.debug(message.getUserId()+ "的新订单消息发送成功（已持久化并确认）");
             }
         }catch(Exception e){
             log.error("执行异常",e);
@@ -192,6 +201,10 @@ public class NewOrderMassageTask {
         ){
             //定义交换机
             channel.exchangeDeclare(exchangeName,BuiltinExchangeType.DIRECT);
+            // 先声明队列（参数与 sendNewOrderMessage 保持一致：durable=true, autoDelete=false）
+            // 队列不存在时创建，已存在时幂等返回，避免 queuePurge 对不存在队列抛 NOT_FOUND 异常
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, exchangeName, String.valueOf(userId));
             //清空队列
             channel.queuePurge(queueName);
             log.debug(userId + "的新订单消息队列清空删除");

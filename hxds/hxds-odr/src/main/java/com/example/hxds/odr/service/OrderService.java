@@ -79,4 +79,8 @@ public interface OrderService {
     //小程序乘客查询订单评价详情分页  查询记录总数和分页记录
     public PageUtils searchCustomerOrderByPage(Map param);
 
+    // Fix-2: 微信支付回调 - 根据uuid更新订单支付状态为已付款
+    // 返回: 1=成功, 0=幂等(已支付), -1=事故(已关单但款已扣,需人工退款)
+    public int updateOrderPayStatus(Map<String, Object> param);
+
 }

@@ -20,13 +20,17 @@ public class MicroAppUtil {
     private String appSecret;
 
     public String getOpenId(String code) {
+        // 开发模式：code以"dev_"开头时，直接返回测试OpenID，跳过微信API验证
+        if (code != null && code.startsWith("dev_")) {
+            return "dev_openid_" + code.substring(4);
+        }
         String url = "https://api.weixin.qq.com/sns/jscode2session";
         HashMap map = new HashMap();
         map.put("appid", appId);
         map.put("secret", appSecret);
         map.put("js_code", code);
         map.put("grant_type", "authorization_code");
-        String response = HttpUtil.post(url, map);
+        String response = HttpUtil.get(url, map);
         JSONObject json = JSONUtil.parseObj(response);
         String openId = json.getStr("openid");
         if (openId == null || openId.length() == 0) {
@@ -53,6 +57,10 @@ public class MicroAppUtil {
     }
 
     public String getTel(String photeCode) {
+        // 开发模式：phoneCode以"dev_"开头时返回测试手机号
+        if (photeCode != null && photeCode.startsWith("dev_")) {
+            return "138" + String.format("%08d", Math.abs(photeCode.hashCode()) % 100000000);
+        }
         String accessToken = getAccessToken();
         String url = "https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=" + accessToken;
         JSONObject param = new JSONObject();

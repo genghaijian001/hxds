@@ -6,7 +6,7 @@
 		</u-cell-group>
 		<button class="btn" @tap="saveHandle">确定保存</button>
 		<view class="desc">
-			保存即代表您同意华夏代驾的
+			保存即代表您同意白光代驾的
 			<text>《隐私政策》</text>
 		</view>
 		<u-toast ref="uToast" />

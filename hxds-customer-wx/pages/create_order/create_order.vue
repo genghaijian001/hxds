@@ -94,7 +94,8 @@ export default {
             showCar: false,
             showPopup: false,
             timestamp: 15*60,
-            orderId: null
+            orderId: null,
+            orderHandled: false
         };
     },
     methods: {
@@ -233,6 +234,8 @@ export default {
             });
         },
         searchOrderStatus: function(ref) {
+            // 已处理过终态则不再轮询
+            if (ref.orderHandled) return;
             let data = {
                 orderId: ref.orderId
             };
@@ -242,6 +245,7 @@ export default {
                 data,
                 function(resp) {
                     if (resp.data.result == 2) {
+                        ref.orderHandled = true;
                         ref.showPopup = false;
                         ref.timestamp = null;
                         uni.showToast({
@@ -254,8 +258,8 @@ export default {
                                 url: '../move/move?orderId=' + ref.orderId
                             });
                         }, 3000);
-                    } 
-                    else if (resp.data.result == 0) {
+                    } else if (resp.data.result == 0) {
+                        ref.orderHandled = true;
                         ref.showPopup = false;
                         ref.timestamp = null;
                         uni.showToast({
@@ -293,6 +297,7 @@ export default {
         },
         countChangeHandle: function(s) {
             let that = this;
+            if (that.orderHandled) return;
             if (s != 0 && s % 5 == 0) {
                 that.searchOrderStatus(that);
             }

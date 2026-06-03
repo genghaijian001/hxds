@@ -44,6 +44,7 @@ spring:
       validation-query: SELECT 1
       max-active: 8
       min-idle: 4
+      max-wait: 5000
   servlet:
     multipart:
       enabled: true

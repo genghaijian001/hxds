@@ -1,11 +1,11 @@
 <template>
 	<view>
-		<view class="order-list" v-for="one in monthList">
+		<view class="order-list" v-for="one in monthList" :key="one.month">
 			<view class="month">
 				<text>{{ one.month }}</text>
 				<image src="../../static/order_list/calendar-icon.png" mode="widthFix"></image>
 			</view>
-			<view class="order" v-for="order in one.orders" @tap="viewOrderHandle(order.id)">
+			<view class="order" v-for="order in one.orders" :key="order.id" @tap="viewOrderHandle(order.id)">
 				<view class="top">
 					<view class="date">{{ order.acceptTime }}</view>
 					<view class="amount-status">
@@ -85,7 +85,7 @@ export default {
 						one.style = 'status';
 					}
 					one.status = status[one.status + ''];
-					one.acceptTime = dayjs(one.acceptTime, 'YYYY-MM-DD HH-mm-ss').format('MM/DD HH:mm');
+					one.acceptTime = dayjs(one.acceptTime, 'YYYY-MM-DD HH:mm:ss').format('MM/DD HH:mm');
 					orderList.push(one);
 					temp = one.month;
 				}
@@ -128,7 +128,21 @@ export default {
 		that.loadPageData(that);
 	},
 
-	onShow: function() {},
+	onShow: function() {
+		let that = this;
+		that.monthList = [];
+		that.page = 1;
+		that.isLastPage = false;
+		that.loadPageData(that);
+	},
+	onPullDownRefresh: function() {
+		let that = this;
+		that.monthList = [];
+		that.page = 1;
+		that.isLastPage = false;
+		that.loadPageData(that);
+		uni.stopPullDownRefresh();
+	},
 	onHide: function() {}
 };
 </script>

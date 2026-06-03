@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  hbase:
+    build:
+      context: ./hbase-phoenix
+      dockerfile: Dockerfile
+    container_name: hbase
+    ports:
+      - "2181:2181"
+      - "8765:8765"
+      - "16000:16000"
+      - "16010:16010"
+      - "16020:16020"
+      - "16030:16030"
+    restart: unless-stopped
+
+  nacos:
+    image: nacos/nacos-server:v3.0.2
+    container_name: nacos
+    environment:
+      - MODE=standalone
+      - NACOS_AUTH_ENABLE=false
+      - NACOS_AUTH_TOKEN=aHhkcy1uYWNvcy1hdXRoLXNlY3JldC1rZXktZm9yLWRldi0yMDI2
+      - NACOS_AUTH_IDENTITY_KEY=nacos
+      - NACOS_AUTH_IDENTITY_VALUE=nacos
+      - PREFER_HOST_MODE=hostname
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    restart: unless-stopped
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+
+  seata-server:
+    image: apache/seata-server:2.2.0
+    container_name: seata-server
+    ports:
+      - "7091:7091"   # HTTP 控制台
+      - "8091:8091"   # 客户端通信端口
+    environment:
+      - SEATA_IP=127.0.0.1
+      - STORE_MODE=file
+    restart: unless-stopped

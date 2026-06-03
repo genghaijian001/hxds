@@ -4,7 +4,7 @@ import com.example.hxds.mis.api.db.dao.PermissionDao;
 import com.example.hxds.mis.api.service.PermissionService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 

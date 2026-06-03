@@ -23,6 +23,9 @@ public interface OrderService {
     //创建支付订单
     public HashMap createWxPayment(long orderId, long customerId);
 
+    //支付完成后更新订单状态
+    public String updateOrderAboutPayment(UpdateOrderAboutPaymentForm form);
+
     public PageUtils searchCustomerOrderByPage(SearchCustomerOrderByPageForm form);
 
 

@@ -123,7 +123,7 @@ export default {
 				content: '确认退出系统？',
 				success: function(resp) {
 					if (resp.confirm) {
-						that.ajax(that.url.logout, 'GET', null, function(resp) {
+						that.ajax(that.url.logout, 'POST', null, function(resp) {
 							uni.removeStorageSync('realAuth');
 							uni.removeStorageSync('token');
 							uni.showToast({
@@ -131,7 +131,7 @@ export default {
 								success: function() {
 									setTimeout(function() {
 										uni.redirectTo({
-											url: '../login/login'
+											url: '/pages/login/login'
 										});
 									}, 1500);
 								}
@@ -166,11 +166,11 @@ export default {
 							uni.removeStorageSync(key);
 							console.log('删除Storage缓存成功');
 						}
-						uni.getSavedFileList({
+						wx.getFileSystemManager().getSavedFileList({
 							success: function(resp) {
 								for (let one of resp.fileList) {
 									let path = one.filePath;
-									uni.removeSavedFile({
+									wx.getFileSystemManager().removeSavedFile({
 										filePath: path,
 										success: function() {
 											console.log('缓存文件删除成功');

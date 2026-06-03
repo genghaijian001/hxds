@@ -1,7 +1,6 @@
 package com.example.hxds.nebula.db.dao;
 
 import com.example.hxds.nebula.db.pojo.OrderGpsEntity;
-import org.apache.hadoop.util.hash.Hash;
 
 import java.util.ArrayList;
 import java.util.HashMap;

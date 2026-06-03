@@ -2,7 +2,7 @@ package com.example.hxds.bff.driver.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.map.MapUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.bff.driver.controller.form.*;
 import com.example.hxds.bff.driver.feign.DrServiceApi;
 import com.example.hxds.bff.driver.feign.OdrServiceApi;
@@ -10,9 +10,8 @@ import com.example.hxds.bff.driver.service.DriverService;
 import com.example.hxds.common.util.CosUtil;
 import com.example.hxds.common.util.R;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
 
 @Service
@@ -28,8 +27,7 @@ public class DriverServiceImpl implements DriverService {
     private CosUtil cosUtil;
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public long registerNewDriver(RegisterNewDriverForm form) {
         R r = drServiceApi.registerNewDriver(form);
         long userId = Convert.toLong(r.get("userId"));
@@ -37,8 +35,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateDriverAuth(UpdateDriverAuthForm form) {
         R r=drServiceApi.updateDriverAuth(form);
         int rows=Convert.toInt(r.get("rows"));
@@ -46,8 +43,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String createDriverFaceModel(CreateDriverFaceModelForm form) {
         R r=drServiceApi.createDriverFaceModel(form);
         String result = MapUtil.getStr(r, "result");
@@ -118,5 +114,10 @@ public class DriverServiceImpl implements DriverService {
         map.put("drcardHoldingUrl", drcardHoldingUrl);
 
         return map;
+    }
+
+    @Override
+    public R updateDriverSettings(UpdateDriverSettingsForm form) {
+        return drServiceApi.updateDriverSettings(form);
     }
 }

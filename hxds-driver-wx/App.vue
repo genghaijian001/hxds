@@ -6,15 +6,50 @@ export default {
 			keepScreenOn: true
 		});
 
+		// 隐私保护机制（2023年9月起强制要求）
+		if (wx.onNeedPrivacyAuthorization) {
+			wx.onNeedPrivacyAuthorization((resolve) => {
+				uni.showModal({
+					title: '隐私保护提示',
+					content: '在使用代驾服务前，请阅读并同意《隐私保护指引》',
+					confirmText: '同意',
+					cancelText: '拒绝',
+					success(res) {
+						if (res.confirm) {
+							resolve({ buttonId: 'agree-btn', event: 'agreeprivacyauthorization' })
+						} else {
+							resolve({ event: 'rejectprivacyauthorization' })
+						}
+					}
+				})
+			})
+		}
+
 		//TODO 每隔3分钟触发自定义事件，接受系统消息
 
-		wx.startLocationUpdate({
-			success(resp) {
-				console.log('开启定位成功');
-			},
-			fail(resp) {
-				console.log('开启定位失败');
-				uni.$emit('updateLocation', null);
+		wx.getSetting({
+			success(settingRes) {
+				if (settingRes.authSetting['scope.userLocation'] === false) {
+					// 用户明确拒绝过
+					uni.showModal({
+						title: '定位权限已关闭',
+						content: '代驾服务需要位置权限才能接单，请在设置中开启',
+						confirmText: '去开启',
+						cancelText: '取消',
+						success(modalRes) {
+							if (modalRes.confirm) { wx.openSetting(); }
+						}
+					});
+					uni.$emit('updateLocation', null);
+					return;
+				}
+				wx.startLocationUpdate({
+					success() { console.log('开启定位成功'); },
+					fail() {
+						console.log('开启定位失败');
+						uni.$emit('updateLocation', null);
+					}
+				});
 			}
 		});
 
@@ -29,7 +64,7 @@ export default {
 			};
 
 			let workStatus = uni.getStorageSync('workStatus');
-			let baseUrl = 'http://10.114.41.214:8201/hxds-driver';
+			let baseUrl = 'http://127.0.0.1:8201/hxds-driver';
 			if (workStatus == '开始接单') {
 				// TODO 只在每分钟的前10秒上报定位信息，减小服务器压力
 				// let current = new Date();
@@ -37,11 +72,13 @@ export default {
 				// 	return;
 				// }
 				let settings = uni.getStorageSync('settings');
-				settings = {
-					orderDistance: 0,
-					rangeDistance: 5,
-					orientation: ''
-				};
+				if (!settings) {
+					settings = {
+						orderDistance: 0,
+						rangeDistance: 5,
+						orientation: ''
+					};
+				}
 				let orderDistance = settings.orderDistance;
 				let rangeDistance = settings.rangeDistance;
 				let orientation = settings.orientation;
@@ -62,7 +99,7 @@ export default {
 					success: function(resp) {
 						if (resp.statusCode == 401) {
 							uni.redirectTo({
-								url: 'pages/login/login'
+								url: '/pages/login/login'
 							});
 						} else if (resp.statusCode == 200 && resp.data.code == 200) {
 							let data = resp.data;
@@ -98,7 +135,7 @@ export default {
 					success:function(resp){
 						if (resp.statusCode == 401) {
 							uni.redirectTo({
-								url: 'pages/login/login'
+								url: '/pages/login/login'
 							});
 						} else if (resp.statusCode == 200 && resp.data.code == 200) {
 							let data = resp.data;

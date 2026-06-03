@@ -6,7 +6,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.common.exception.HxdsException;
 import com.example.hxds.common.util.PageUtils;
 import com.example.hxds.common.wxpay.MyWXPayConfig;
@@ -27,17 +27,42 @@ import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+
+    /**
+     * Fix-3: 订单状态合法转移表
+     * 1等待接单 2已接单 3司机已到达 4开始代驾 5结束代驾
+     * 6未付款 7已付款 8订单已结束 9顾客撤单 10司机撤单 11事故关闭
+     */
+    private static final Map<Byte, Set<Byte>> VALID_TRANSITIONS = new HashMap<>();
+    static {
+        VALID_TRANSITIONS.put((byte) 1, new HashSet<>(Arrays.asList((byte) 2, (byte) 9, (byte) 10)));
+        VALID_TRANSITIONS.put((byte) 2, new HashSet<>(Arrays.asList((byte) 3, (byte) 9, (byte) 10)));
+        VALID_TRANSITIONS.put((byte) 3, new HashSet<>(Arrays.asList((byte) 4, (byte) 9, (byte) 10, (byte) 11)));
+        // DESIGN-2修复: 状态4(行驶中)可转为5(结束)或11(事故关闭)
+        VALID_TRANSITIONS.put((byte) 4, new HashSet<>(Arrays.asList((byte) 5, (byte) 11)));
+        VALID_TRANSITIONS.put((byte) 5, new HashSet<>(Collections.singletonList((byte) 6)));
+        VALID_TRANSITIONS.put((byte) 6, new HashSet<>(Collections.singletonList((byte) 7)));
+        VALID_TRANSITIONS.put((byte) 7, new HashSet<>(Collections.singletonList((byte) 8)));
+    }
+
+    /** Fix-3: 校验状态转移是否合法 */
+    private void validateStatusTransition(byte currentStatus, byte targetStatus) {
+        Set<Byte> allowedTargets = VALID_TRANSITIONS.get(currentStatus);
+        if (allowedTargets == null || !allowedTargets.contains(targetStatus)) {
+            throw new HxdsException(
+                String.format("非法的订单状态转移：%d -> %d", currentStatus, targetStatus)
+            );
+        }
+    }
+
     @Resource
     private OrderDao orderDao;
     @Resource
@@ -74,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String insertOrder(OrderEntity orderEntity, OrderBillEntity orderBillEntity) {
         //插入订单记录
         int rows = orderDao.insert(orderEntity);
@@ -104,13 +129,13 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String acceptNewOrder(long driverId, long orderId) {
         if (!redisTemplate.hasKey("order#" + orderId)){
             return "抢单失败";
         }
-        //执行redis事务
-        redisTemplate.execute(new SessionCallback() {
+        //执行redis事务（WATCH/MULTI/EXEC 乐观锁），防止多司机同时抢同一订单
+        java.util.List<?> txResult = (java.util.List<?>) redisTemplate.execute(new SessionCallback() {
             @Override
             public Object execute(RedisOperations operations) throws DataAccessException {
                 //获取新订单记录的Version
@@ -118,14 +143,17 @@ public class OrderServiceImpl implements OrderService {
                 //本地缓存Redis操作
                 operations.multi();
                 //把新订单缓存的Value设置成抢单司机的ID
-                operations.opsForValue().set("order#" + orderId,driverId);
-                //执行Redis事务，如果事务提交失败会自动抛出异常
+                operations.opsForValue().set("order#" + orderId, driverId + "");
+                //执行Redis事务，其他司机并发修改时会返回null，表示事务失败
                 return operations.exec();
             }
         });
-        //抢单成功之后，删除Redis中的新订单，避免让其他司机参与抢单
-        redisTemplate.delete("order#" + orderId);
-        //更新订单记录，添加上接单司机ID和接单时间
+        // Fix-1: 检查事务结果，exec()返回null或空列表说明被其他司机抢先，本次抢单失败
+        if (txResult == null || txResult.isEmpty()) {
+            return "抢单失败";
+        }
+        // DESIGN-1修复: 先更新DB，成功后再删除Redis缓存
+        // 原逻辑先删缓存再更新DB，DB失败时缓存已删导致订单无法被其他司机抢
         HashMap param=new HashMap(){{
             put("driverId" , driverId);
             put("orderId" , orderId);
@@ -134,6 +162,8 @@ public class OrderServiceImpl implements OrderService {
         if (rows != 1){
             throw new HxdsException("接单失败，无法更新订单记录");
         }
+        // DB更新成功后才删除Redis缓存，防止竞态条件下数据不一致
+        redisTemplate.delete("order#" + orderId);
         return "接单成功";
     }
 
@@ -169,7 +199,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String deleteUnAcceptOrder(Map param) {
         long orderId = MapUtil.getLong(param, "orderId");
         if (!redisTemplate.hasKey("order#"+orderId)){
@@ -250,11 +280,11 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int arriveStartPlace(Map param) {
-        //添加到达上车点标志位
+        //添加到达上车点标志位，INC-5修复: 设置30分钟TTL防止乘客不确认导致订单永久卡在状态3
         long orderId = MapUtil.getLong(param, "orderId");
-        redisTemplate.opsForValue().set("order_driver_arrivied#"+orderId,"1");
+        redisTemplate.opsForValue().set("order_driver_arrivied#" + orderId, "1", 30, TimeUnit.MINUTES);
         int rows = orderDao.updateOrderStatus(param);
         if (rows != 1) {
             throw new HxdsException("更新订单状态失败");
@@ -270,10 +300,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public boolean confirmArriveStartPlace(long orderId) {
         String key="order_driver_arrivied#"+orderId;
-        // 1等待接单，2已接单，3司机已到达，4开始代驾，5结束代驾，6未付款，7已付款，
-        // 8订单已结束，9顾客撤单，10司机撤单，11事故关闭，12其他
-        if (redisTemplate.hasKey(key) && redisTemplate.opsForValue().get(key).toString().equals("1")){
-            redisTemplate.opsForValue().set(key,"2");
+        if (redisTemplate.hasKey(key)) {
+            if (redisTemplate.opsForValue().get(key).toString().equals("1")) {
+                redisTemplate.opsForValue().set(key, "2", 10, TimeUnit.MINUTES);
+                return true;
+            }
+            return false;
+        }
+        // key已过期，查DB：status=3说明司机确实已到达，补设"2"允许继续流程
+        HashMap<String, Object> statusParam = new HashMap<>();
+        statusParam.put("orderId", orderId);
+        Integer status = orderDao.searchOrderStatus(statusParam);
+        if (status != null && status == 3) {
+            redisTemplate.opsForValue().set(key, "2", 10, TimeUnit.MINUTES);
             return true;
         }
         return false;
@@ -286,18 +325,34 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
     public int startDriving(Map param) {
         long orderId = MapUtil.getLong(param, "orderId");
-        String key="order_driver_arrivied#"+orderId;
-//        if(redisTemplate.hasKey(key) && redisTemplate.opsForValue().get(key).toString().equals("2")){
-//            redisTemplate.delete(key);
+        String key = "order_driver_arrivied#" + orderId;
+        boolean canStart = false;
+        if (redisTemplate.hasKey(key)) {
+            Object val = redisTemplate.opsForValue().get(key);
+            if (val != null && "2".equals(val.toString())) {
+                canStart = true;
+            }
+        }
+        // Redis key 不存在时（已过期或序列化不稳定），查 DB 做回退：status=3 说明乘客已确认，允许开始
+        if (!canStart) {
+            HashMap<String, Object> statusParam = new HashMap<>();
+            statusParam.put("orderId", orderId);
+            Integer dbStatus = orderDao.searchOrderStatus(statusParam);
+            if (dbStatus != null && dbStatus == 3) {
+                canStart = true;
+            }
+        }
+        if (canStart) {
+            redisTemplate.delete(key);
             int rows = orderDao.updateOrderStatus(param);
-            if (rows != 1){
+            if (rows != 1) {
                 throw new HxdsException("更新订单状态失败");
             }
             return rows;
-//        }
+        }
+        throw new HxdsException("乘客未确认司机到达，无法开始代驾");
     }
 
     /**
@@ -307,8 +362,16 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateOrderStatus(Map param) {
+        long orderId = MapUtil.getLong(param, "orderId");
+        byte targetStatus = ((Number) param.get("status")).byteValue();
+        HashMap<String, Object> statusParam = new HashMap<>();
+        statusParam.put("orderId", orderId);
+        Integer currentStatus = orderDao.searchOrderStatus(statusParam);
+        if (currentStatus != null) {
+            validateStatusTransition(currentStatus.byteValue(), targetStatus);
+        }
         int rows = orderDao.updateOrderStatus(param);
         if (rows != 1){
             throw new HxdsException("更新订单状态失败");
@@ -413,7 +476,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateOrderPrepayId(Map param) {
         int rows = orderDao.updateOrderPrepayId(param);
         if (rows != 1){
@@ -450,6 +513,60 @@ public class OrderServiceImpl implements OrderService {
         int  length = (Integer) param.get("length");
         PageUtils pageUtils = new PageUtils(list,count,start,length);
         return pageUtils;
+    }
+
+    /**
+     * Fix-2 / INC-1修复: 微信支付回调处理
+     * 1. 更新 tb_order 状态为7(已付款)、pay_id、pay_time
+     * 2. 同步更新 tb_order_bill.real_pay，保持账单与订单一致
+     */
+    @Override
+    @Transactional
+    public int updateOrderPayStatus(Map<String, Object> param) {
+        int rows = orderDao.updateOrderPayStatus(param);
+        if (rows == 1) {
+            log.info("微信支付回调：订单支付成功，uuid={}, payId={}", param.get("uuid"), param.get("transactionId"));
+            String realPay = param.get("realPay") != null ? param.get("realPay").toString() : null;
+            if (realPay != null) {
+                String uuid = param.get("uuid").toString();
+                String orderIdStr = orderDao.searchOrderIdByUUID(uuid);
+                if (orderIdStr != null) {
+                    HashMap billParam = new HashMap();
+                    billParam.put("orderId", Long.parseLong(orderIdStr));
+                    billParam.put("realPay", realPay);
+                    billParam.put("voucherFee", "0.00");
+                    orderBillDao.updateBillPayment(billParam);
+                }
+            }
+            return 1;
+        }
+        // rows=0：查询订单实际状态，区分幂等与业务事故
+        String uuid = param.get("uuid") != null ? param.get("uuid").toString() : "";
+        String orderIdStr = orderDao.searchOrderIdByUUID(uuid);
+        if (orderIdStr == null) {
+            log.warn("微信支付回调：找不到订单记录，uuid={}", uuid);
+            return 0;
+        }
+        HashMap<String, Object> statusParam = new HashMap<>();
+        statusParam.put("orderId", Long.parseLong(orderIdStr));
+        Integer currentStatus = orderDao.searchOrderStatus(statusParam);
+        if (currentStatus == null) {
+            log.warn("微信支付回调：查询订单状态为空，uuid={}", uuid);
+            return 0;
+        }
+        if (currentStatus == 7) {
+            log.info("微信支付回调：幂等处理，订单已支付，uuid={}", uuid);
+            return 0;
+        }
+        if (currentStatus == 9) {
+            // 超时关单后微信仍扣款 — 业务事故，需人工发起退款
+            log.error("【支付事故-需人工处理】订单已超时关闭(status=9)但微信已完成扣款，" +
+                    "请登录微信商户平台发起退款！uuid={}, transactionId={}, amount(元)={}",
+                    uuid, param.get("transactionId"), param.get("realPay"));
+            return -1;
+        }
+        log.warn("微信支付回调：订单状态异常，不在预期范围，uuid={}, currentStatus={}", uuid, currentStatus);
+        return 0;
     }
 
 }

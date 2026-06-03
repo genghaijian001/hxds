@@ -6,6 +6,7 @@ import com.example.hxds.bff.driver.controller.form.CalculateProfitsharingForm;
 import com.example.hxds.common.util.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "hxds-rule")
 public interface RuleServiceApi {
@@ -15,7 +16,7 @@ public interface RuleServiceApi {
      * @return
      */
     @PostMapping("/charge/calculateOrderCharge")
-    public R calculateOrderCharge(CalculateOrderChargeForm form);
+    public R calculateOrderCharge(@RequestBody CalculateOrderChargeForm form);
 
     /**
      * 计算奖励费
@@ -23,7 +24,7 @@ public interface RuleServiceApi {
      * @return
      */
     @PostMapping("/award/calculateIncentiveFee")
-    public R calculateIncentiveFee(CalculateIncentiveFeeForm form);
+    public R calculateIncentiveFee(@RequestBody CalculateIncentiveFeeForm form);
 
     /**
      * 计算分账费
@@ -31,5 +32,5 @@ public interface RuleServiceApi {
      * @return
      */
     @PostMapping("/profitsharing/calculateProfitsharing")
-    public R calculateProfitsharing(CalculateProfitsharingForm form);
+    public R calculateProfitsharing(@RequestBody CalculateProfitsharingForm form);
 }

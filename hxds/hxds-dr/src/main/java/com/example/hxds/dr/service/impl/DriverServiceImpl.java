@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.codingapi.txlcn.tc.annotation.LcnTransaction;
+import io.seata.spring.annotation.GlobalTransactional;
 import com.example.hxds.common.exception.HxdsException;
 import com.example.hxds.common.util.MicroAppUtil;
 import com.example.hxds.common.util.PageUtils;
@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class DriverServiceImpl implements DriverService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String registerNewDriver(Map param) {
         //临时授权码
         String code = MapUtil.getStr(param, "code");
@@ -109,7 +109,7 @@ public class DriverServiceImpl implements DriverService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateDriverAuth(Map param) {
         int rows = driverDao.updateDriverAuth(param);
         return rows;
@@ -123,7 +123,7 @@ public class DriverServiceImpl implements DriverService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public String createDriverFaceModel(long driverId, String photo) {
         //查询员工的姓名、性别
         HashMap map = driverDao.searchDriverNameAndSex(driverId);
@@ -237,7 +237,7 @@ public class DriverServiceImpl implements DriverService {
      */
     @Override
     @Transactional
-    @LcnTransaction
+    @GlobalTransactional
     public int updateDriverRealAuth(Map param) {
         int rows = driverDao.updateDriverRealAuth(param);
         return rows;

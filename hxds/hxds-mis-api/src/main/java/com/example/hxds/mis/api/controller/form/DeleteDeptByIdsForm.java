@@ -3,7 +3,7 @@ package com.example.hxds.mis.api.controller.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 @Data
 @Schema(description = "删除部门表单")
