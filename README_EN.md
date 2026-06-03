@@ -1,22 +1,86 @@
 # HXDS Cloud
 
-HXDS Cloud is a full-stack designated-driver platform that includes:
+HXDS Cloud is a full designated-driver platform repository that currently includes:
 
-- a customer WeChat mini-program `hxds-customer-wx`
-- a driver WeChat mini-program `hxds-driver-wx`
-- a Vue 3 admin portal `hxds-mis-vue`
-- a Java microservice backend under `hxds/`
-- deployment helpers, cloud functions, and operational documents
+- customer WeChat mini-program: `hxds-customer-wx`
+- driver WeChat mini-program: `hxds-driver-wx`
+- MIS admin frontend: `hxds-mis-vue`
+- Java microservice backend: `hxds/`
+- cloud functions, database scripts, Docker middleware stack, and deployment documents
 
-The current repository reflects the latest refactored structure based on **Java 21 + Spring Boot 3.3 + Spring Cloud Alibaba 2023**, with complete customer, driver, order, map, payment, notification, rule-engine, and admin workflows.
+This README is aligned with the **current codebase**, not with older TX-LCN-era architecture notes.
+
+## Current Version Overview
+
+### Backend core versions
+
+- Java: `21`
+- Maven Compiler Plugin: `3.15.0`
+- Spring Boot: `3.3.13`
+- Spring Cloud: `2023.0.3`
+- Spring Cloud Alibaba: `2023.0.3.3`
+- Lombok: `1.18.30`
+- Hutool: `5.6.3`
+
+### Admin frontend versions
+
+Based on `hxds-mis-vue/package.json`:
+
+- Vue: `3.0.3`
+- Vite: `2.1.5`
+- Vue Router: `4.0.5`
+- Element Plus: `1.0.2-beta.42`
+- ECharts: `5.1.1`
+- Less: `4.1.1`
+- Sass: `1.32.8`
+
+### Mini-program frontend dependencies
+
+Based on `hxds-customer-wx/package.json` and `hxds-driver-wx/package.json`:
+
+- UniApp project structure
+- uView: `1.0.0`
+- dayjs: `^1.10.7`
+- vue-i18n: `^8.20.0`
+
+### Distributed transactions
+
+The current codebase uses **Seata** for distributed transaction configuration.
+
+Seata configuration is currently present in:
+
+- `bff-customer`
+- `bff-driver`
+- `hxds-cst`
+- `hxds-dr`
+- `hxds-odr`
+- `hxds-rule`
+- `hxds-mis-api`
+
+## Current Backend Services
+
+According to the active modules in `hxds/pom.xml`, the backend currently contains:
+
+- `common`
+- `gateway`
+- `bff-customer`
+- `bff-driver`
+- `hxds-cst`
+- `hxds-dr`
+- `hxds-odr`
+- `hxds-snm`
+- `hxds-mps`
+- `hxds-rule`
+- `hxds-nebula`
+- `hxds-mis-api`
 
 ## Repository Layout
 
 ```text
 hxds-cloud-master
-|-- hxds-customer-wx              # Customer mini-program (UniApp)
-|-- hxds-driver-wx                # Driver mini-program (UniApp)
-|-- hxds-mis-vue                  # Admin frontend (Vue 3 + Vite)
+|-- hxds-customer-wx              # Customer WeChat mini-program (UniApp)
+|-- hxds-driver-wx                # Driver WeChat mini-program (UniApp)
+|-- hxds-mis-vue                  # MIS admin frontend (Vue 3 + Vite)
 |-- hxds/                         # Java backend microservices
 |   |-- common
 |   |-- gateway
@@ -30,58 +94,25 @@ hxds-cloud-master
 |   |-- hxds-rule
 |   |-- hxds-nebula
 |   `-- hxds-mis-api
-|-- db/                           # Database initialization and business rule SQL files
-|-- docker/                       # Local/test middleware stack and HBase/Phoenix support
+|-- db/                           # Database initialization and rule SQL files
+|-- docker/                       # Local/test middleware stack and container setup
 |-- cloudfunctions/               # Cloud functions (currently OCR service)
 |-- images/                       # README screenshots
-|-- wx-miniprogram-docs/          # Mini-program capability notes and official API summaries
-`-- tasks/                        # Refactor, deployment, and operational planning docs
+|-- wx-miniprogram-docs/          # Mini-program capability notes
+`-- tasks/                        # Refactor, deployment, and ops documents
 ```
 
-## Core Capabilities
+## Current Capabilities
 
-- customer order creation, ride-hailing, payment, and review
-- driver dispatch, order acceptance, arrival confirmation, trip execution, and completion
-- BFF aggregation, authentication, and downstream orchestration
-- route planning, nearby-driver matching, and location caching
-- WeChat Pay, SMS, OCR, facial verification, object storage, and messaging integrations
-- rule-engine driven pricing, cancellation fees, rewards, and settlement logic
-- admin management for drivers, orders, comments, vouchers, and permissions
+- customer order placement, designated-driver call, payment, and review
+- driver dispatch, order acceptance, arrival, trip execution, and completion
+- BFF aggregation, unified authentication, and downstream orchestration
+- route calculation, nearby-driver matching, and location caching
+- WeChat Pay, SMS, OCR, and object-storage integrations
+- rule-engine driven pricing, cancellation fees, rewards, and settlement
+- MIS admin operations for drivers, orders, comments, vouchers, and permissions
 
-## Tech Stack
-
-### Backend
-
-- Java 21
-- Spring Boot 3.3.13
-- Spring Cloud 2023.0.3
-- Spring Cloud Alibaba 2023.0.3.3
-- Spring Cloud Gateway
-- OpenFeign
-- MyBatis
-- Redis
-- MongoDB
-- RabbitMQ
-- Nacos
-- MinIO / Tencent COS
-- The current latest version does not rely on TX-LCN, and distributed transaction middleware is not part of the active runtime chain.
-
-### Frontend
-
-- UniApp
-- uView UI
-- Vue 3
-- Vite
-
-### Cloud / WeChat integrations
-
-- WeChat Pay
-- Tencent Map
-- WeChat speech translation plugin
-- OCR and ID-document recognition integrations
-- OCR cloud function wrapper
-
-## Service Architecture
+## Service Flow
 
 ```text
 Mini-programs / MIS frontend
@@ -99,21 +130,21 @@ MySQL / Redis / MongoDB / RabbitMQ / Nacos / MinIO
 
 | Service | Responsibility |
 |---|---|
-| `gateway` | unified API entry |
+| `gateway` | unified API gateway entry |
 | `bff-customer` | customer-facing mini-program aggregation |
 | `bff-driver` | driver-facing mini-program aggregation |
 | `hxds-cst` | customer accounts, profile, vouchers |
 | `hxds-dr` | driver profile, verification, wallet, OCR-related flows |
 | `hxds-odr` | order state machine, billing, payment status |
-| `hxds-snm` | notifications, messaging center, queue consumption |
+| `hxds-snm` | notifications, message center, MQ consumption |
 | `hxds-mps` | route calculation, driver matching, location cache |
-| `hxds-rule` | business rule engine |
-| `hxds-nebula` | GPS, monitoring, and analytics |
+| `hxds-rule` | business rule engine and rule data |
+| `hxds-nebula` | GPS tracks, monitoring data, analytics |
 | `hxds-mis-api` | admin backend APIs |
 
 ## Runtime Dependencies
 
-The current project expects the following infrastructure:
+The current project depends on:
 
 - MySQL
 - Redis
@@ -121,18 +152,14 @@ The current project expects the following infrastructure:
 - RabbitMQ
 - Nacos
 - MinIO
-- HBase / Phoenix (only required for `hxds-nebula`)
+- Seata
+- HBase / Phoenix (only for `hxds-nebula` related scenarios)
 
-See also:
+References:
 
 - [docker/docker-compose.yml](docker/docker-compose.yml)
 - [Production deployment checklist](tasks/hxds-production-deployment-checklist.md)
 - [Windows-to-Tencent-Cloud Linux operations manual](tasks/hxds-production-operations-manual-tencent-cloud.md)
-
-## Sensitive Configuration
-
-The GitHub version keeps all cloud, payment, SMS, and storage secrets as environment-variable placeholders only.
-To run locally, provide your real values through local environment variables or an untracked local override strategy instead of committing them into the repository.
 
 ## Local Development
 
@@ -143,7 +170,7 @@ cd hxds
 mvn clean package -DskipTests
 ```
 
-Run a single service:
+Single-service example:
 
 ```bash
 cd hxds/hxds-odr
@@ -151,7 +178,7 @@ mvn clean package -DskipTests
 java -jar target/hxds-odr-0.0.1-SNAPSHOT.jar
 ```
 
-### Admin Portal
+### MIS Admin Frontend
 
 ```bash
 cd hxds-mis-vue
@@ -169,11 +196,11 @@ cd ../hxds-driver-wx
 npm install
 ```
 
-Then compile the `unpackage/dist/dev/mp-weixin/` output with HBuilderX / WeChat DevTools.
+Then compile `unpackage/dist/dev/mp-weixin/` with HBuilderX or WeChat DevTools.
 
 ## Database Scripts
 
-The repository now uses per-database SQL files:
+Current per-database SQL files:
 
 - `db/hxds_cst.sql`
 - `db/hxds_dr.sql`
@@ -190,15 +217,19 @@ Business rule SQL files:
 - `db/奖励规则.sql`
 - `db/工作流.sql`
 
-## Operational Documents
+## Sensitive Configuration
 
-The repository now includes updated Chinese deployment and refactor documents:
+The GitHub version should keep cloud, payment, SMS, and storage settings as environment-variable placeholders only, without committing real secrets.
 
-- [Single-AppID refactor plan v2](tasks/single-appid-refactor-v2.md)
+Your **locally runnable setup** should continue to use real local values through environment variables or untracked local override configuration.
+
+## Related Documents
+
+- [Single AppID refactor plan v2](tasks/single-appid-refactor-v2.md)
 - [Production deployment checklist](tasks/hxds-production-deployment-checklist.md)
 - [Windows-to-Tencent-Cloud Linux operations manual](tasks/hxds-production-operations-manual-tencent-cloud.md)
 - [Domain and go-live checklist](tasks/zdkjdj-production-deployment-checklist.md)
-- [Nginx / gateway / mini-program domain templates](tasks/nginx-gateway-wechat-domain-template.md)
+- [Nginx / gateway / mini-program domain template](tasks/nginx-gateway-wechat-domain-template.md)
 - [Production docker-compose template](tasks/hxds-docker-compose-prod-template.md)
 
 ## Screenshots
@@ -218,7 +249,7 @@ The repository now includes updated Chinese deployment and refactor documents:
 ### Driver order pickup
 ![Driver order pickup](images/b64cd58bef9c5eea8dd5bd17f59b7674.png)
 
-### Order dispatch and state transitions
+### Order state transitions
 ![Order dispatch](images/6b7e7f9edf79a90541578950e06cc570.png)
 ![Order state transitions](images/c90024c1735b2ff6d76e5669a353df3a.png)
 
@@ -230,7 +261,5 @@ The repository now includes updated Chinese deployment and refactor documents:
 ![Payment and review](images/8b522364a38af29202b9158a3b62ddc0.png)
 
 ## License
-
-This repository keeps the original license file:
 
 - [LICENSE](LICENSE)
