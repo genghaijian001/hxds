@@ -1,5 +1,7 @@
 # HXDS Cloud
 
+[简体中文](./README.md) | [English](./README_EN.md)
+
 HXDS Cloud 是一个完整的代驾平台项目，当前仓库包含：
 
 - 乘客端微信小程序：`hxds-customer-wx`
@@ -217,7 +219,61 @@ npm install
 
 GitHub 仓库版本应仅保留云服务、支付、短信、对象存储等配置项的环境变量占位符，不提交真实密钥。
 
-你的**本地可启动版本**应继续保留本机真实配置，或通过本机环境变量、未纳入 Git 管理的本地覆盖配置注入真实值。
+当前代码中的配置文件已经大量采用 `${ENV_NAME:默认值}` 这种写法，因此你可以直接通过操作系统环境变量覆盖默认占位符。
+
+例如，在 Windows PowerShell 中可以先设置环境变量，再启动后端：
+
+```powershell
+$env:TENCENT_APP_ID="你的腾讯云AppId"
+$env:TENCENT_SECRET_ID="你的腾讯云SecretId"
+$env:TENCENT_SECRET_KEY="你的腾讯云SecretKey"
+$env:TENCENT_MAP_KEY="你的腾讯地图Key"
+
+$env:WX_APP_ID="你的小程序AppID"
+$env:WX_APP_SECRET="你的小程序AppSecret"
+$env:WX_MCH_ID="你的微信支付商户号"
+$env:WX_PAY_KEY="你的微信支付APIv2或v3相关密钥"
+$env:WECHAT_PAY_NOTIFY_URL="https://你的正式域名/hxds-odr/order/receivePayNotify"
+
+$env:SMS_ACCESS_KEY_ID="你的阿里云短信AccessKeyId"
+$env:SMS_ACCESS_KEY_SECRET="你的阿里云短信AccessKeySecret"
+$env:SMS_SIGN_NAME="你的短信签名"
+$env:SMS_TEMPLATE_CODE="你的短信模板编号"
+
+$env:MINIO_ACCESS_KEY="你的MinIO账号"
+$env:MINIO_SECRET_KEY="你的MinIO密码"
+```
+
+然后再进入对应服务目录启动，例如：
+
+```powershell
+cd hxds
+mvn clean package -DskipTests
+```
+
+如果你希望长期保留本机环境变量，可以：
+
+- 写入系统环境变量
+- 写入用户环境变量
+- 在你自己的本地启动脚本中先设置 `$env:*` 再执行 `mvn` 或 `java -jar`
+
+常见需要覆盖的变量包括：
+
+- `TENCENT_APP_ID`
+- `TENCENT_SECRET_ID`
+- `TENCENT_SECRET_KEY`
+- `TENCENT_MAP_KEY`
+- `WX_APP_ID`
+- `WX_APP_SECRET`
+- `WX_MCH_ID`
+- `WX_PAY_KEY`
+- `WECHAT_PAY_NOTIFY_URL`
+- `SMS_ACCESS_KEY_ID`
+- `SMS_ACCESS_KEY_SECRET`
+- `SMS_SIGN_NAME`
+- `SMS_TEMPLATE_CODE`
+- `MINIO_ACCESS_KEY`
+- `MINIO_SECRET_KEY`
 
 ## 截图
 

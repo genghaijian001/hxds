@@ -1,5 +1,7 @@
 # HXDS Cloud
 
+[简体中文](./README.md) | [English](./README_EN.md)
+
 HXDS Cloud is a full designated-driver platform repository that currently includes:
 
 - customer WeChat mini-program: `hxds-customer-wx`
@@ -217,7 +219,61 @@ Business rule SQL files:
 
 The GitHub version should keep cloud, payment, SMS, and storage settings as environment-variable placeholders only, without committing real secrets.
 
-Your **locally runnable setup** should continue to use real local values through environment variables or untracked local override configuration.
+The current codebase already uses many `${ENV_NAME:defaultValue}` patterns, so you can override placeholder values directly with operating-system environment variables.
+
+For example, in Windows PowerShell:
+
+```powershell
+$env:TENCENT_APP_ID="your Tencent Cloud AppId"
+$env:TENCENT_SECRET_ID="your Tencent Cloud SecretId"
+$env:TENCENT_SECRET_KEY="your Tencent Cloud SecretKey"
+$env:TENCENT_MAP_KEY="your Tencent Map key"
+
+$env:WX_APP_ID="your mini-program AppID"
+$env:WX_APP_SECRET="your mini-program AppSecret"
+$env:WX_MCH_ID="your WeChat Pay merchant id"
+$env:WX_PAY_KEY="your WeChat Pay API key"
+$env:WECHAT_PAY_NOTIFY_URL="https://your-domain/hxds-odr/order/receivePayNotify"
+
+$env:SMS_ACCESS_KEY_ID="your Alibaba Cloud SMS access key id"
+$env:SMS_ACCESS_KEY_SECRET="your Alibaba Cloud SMS access key secret"
+$env:SMS_SIGN_NAME="your SMS sign name"
+$env:SMS_TEMPLATE_CODE="your SMS template code"
+
+$env:MINIO_ACCESS_KEY="your MinIO access key"
+$env:MINIO_SECRET_KEY="your MinIO secret key"
+```
+
+Then start the backend normally, for example:
+
+```powershell
+cd hxds
+mvn clean package -DskipTests
+```
+
+If you want these values to persist on your machine, you can:
+
+- save them as system environment variables
+- save them as user environment variables
+- define them in your own local startup script before running `mvn` or `java -jar`
+
+Common variables you will likely need to override:
+
+- `TENCENT_APP_ID`
+- `TENCENT_SECRET_ID`
+- `TENCENT_SECRET_KEY`
+- `TENCENT_MAP_KEY`
+- `WX_APP_ID`
+- `WX_APP_SECRET`
+- `WX_MCH_ID`
+- `WX_PAY_KEY`
+- `WECHAT_PAY_NOTIFY_URL`
+- `SMS_ACCESS_KEY_ID`
+- `SMS_ACCESS_KEY_SECRET`
+- `SMS_SIGN_NAME`
+- `SMS_TEMPLATE_CODE`
+- `MINIO_ACCESS_KEY`
+- `MINIO_SECRET_KEY`
 
 ## Screenshots
 
